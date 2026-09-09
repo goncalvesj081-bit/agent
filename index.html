@@ -1,1 +1,1708 @@
-teste
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0A0E13">
+<meta name="description" content="Agente - simulador de carreira de empresario de jogadores.">
+<title>Agente</title>
+<style>
+:root{
+  --bg:#0A0E13;--sur:#121821;--sur2:#18202b;--sur3:#1e2835;
+  --line:#243040;--line2:#2f3d50;
+  --tx:#e7eef7;--mut:#8b98ab;--mut2:#5f6c7e;
+  --ac:#35c98a;--ac-d:#1d6d4c;--info:#4a9df0;--neg:#e2564a;--warn:#e0a33c;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1f5;--sur:#ffffff;--sur2:#f4f6f9;--sur3:#e9edf3;
+    --line:#d7dde6;--line2:#c3ccd8;
+    --tx:#101720;--mut:#5a6674;--mut2:#8a94a2;
+    --ac:#0f8f5f;--ac-d:#bfe6d4;--info:#1f6fd0;--neg:#c0392b;--warn:#a5701a;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--tx)}
+body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.num,td,th{font-variant-numeric:tabular-nums}
+.pos{color:var(--ac)}.neg{color:var(--neg)}.mut{color:var(--mut)}.wrn{color:var(--warn)}
+
+header{position:sticky;top:0;z-index:20;background:var(--sur);border-bottom:1px solid var(--line);padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.pat-l{font-size:11.5px;color:var(--mut);margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.pat{display:flex;align-items:flex-end;gap:9px}
+.pat b{font-size:29px;font-weight:650;letter-spacing:-.5px;line-height:1}
+.pat i{font-style:normal;font-size:13px;font-weight:600;padding-bottom:2px}
+.kpis{display:flex;margin-top:9px;border-top:1px solid var(--line);padding-top:8px}
+.kpi{flex:1;min-width:0;border-right:1px solid var(--line);padding-right:8px;margin-right:8px}
+.kpi:last-child{border-right:0;margin-right:0;padding-right:0}
+.kpi b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi span{font-size:10.5px;color:var(--mut)}
+
+main{padding:12px 14px 108px;max-width:760px;margin:0 auto}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:var(--sur);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;padding:9px 2px 10px;font-size:11px;color:var(--mut);border-top:2px solid transparent;line-height:1.3}
+nav button b{display:block;font-size:15px;font-weight:600;margin-bottom:1px}
+nav button[aria-current="true"]{color:var(--tx);border-top-color:var(--ac)}
+nav .badge{display:inline-block;min-width:16px;padding:0 4px;background:var(--neg);color:#fff;border-radius:8px;font-size:10px;font-weight:700;margin-left:3px;vertical-align:1px}
+
+.actbar{position:fixed;left:0;right:0;bottom:0;z-index:29;background:linear-gradient(to top,var(--bg) 62%,transparent);padding:14px 14px calc(66px + env(safe-area-inset-bottom,0px));display:none}
+.actbar.on{display:block}
+.actbar .btn{max-width:732px;margin:0 auto;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);bottom:calc(126px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--sur3);border:1px solid var(--line2);padding:9px 15px;border-radius:22px;font-size:13.5px;max-width:88vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.card{background:var(--sur);border:1px solid var(--line);border-radius:9px;margin-bottom:11px;overflow:hidden}
+.card-h{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card-h h2{margin:0;font-size:14px;font-weight:650}
+.card-h span{font-size:12px;color:var(--mut)}
+.card-b{padding:12px 13px}
+.hint{font-size:12.5px;color:var(--mut);line-height:1.45}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:9px 13px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:5px 11px;border:1px solid var(--line2);border-radius:20px;font-size:12.5px;color:var(--mut)}
+.chip[aria-pressed="true"]{background:var(--ac);border-color:var(--ac);color:#04140d;font-weight:600}
+
+.item{display:block;width:100%;text-align:left;padding:11px 13px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item:active{background:var(--sur2)}
+.item.off{opacity:.45}
+.item.alvo{background:var(--sur2);box-shadow:inset 3px 0 0 var(--ac)}
+.i-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.i-nm{font-size:15.5px;font-weight:600}
+.i-pos{display:inline-block;min-width:31px;font-size:10.5px;font-weight:700;color:var(--info);border:1px solid var(--line2);border-radius:4px;padding:1px 4px;margin-right:6px;text-align:center;vertical-align:1px}
+.i-val{font-size:15px;font-weight:650;white-space:nowrap}
+.i-sub{font-size:12px;color:var(--mut);margin-top:3px;display:flex;justify-content:space-between;gap:10px}
+.stat{display:flex;gap:14px;margin-top:7px}
+.stat div{font-size:10.5px;color:var(--mut)}
+.stat b{display:block;font-size:14px;font-weight:600;color:var(--tx)}
+.trk{position:relative;height:5px;background:var(--sur3);border-radius:3px;overflow:hidden}
+.trk .bd{position:absolute;top:0;bottom:0;background:var(--ac-d)}
+.trk .mk{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--ac)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;color:var(--mut);font-weight:500;padding:0 0 6px}
+td{padding:6px 0;border-top:1px solid var(--line)}
+td.r,th.r{text-align:right}
+tr.eu td{color:var(--ac);font-weight:600}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px}
+.kv:first-child{border-top:0}
+.kv span{color:var(--mut)}
+.kv b{font-weight:600}
+
+.btn{display:block;width:100%;padding:12px;border-radius:8px;background:var(--ac);color:#04140d;font-weight:650;font-size:15px;text-align:center}
+.btn.sec{background:var(--sur3);color:var(--tx);border:1px solid var(--line2);font-weight:600}
+.btn:disabled{background:var(--sur2);color:var(--mut2);border:1px solid var(--line);cursor:default}
+.btn+.btn{margin-top:8px}
+.row2{display:flex;gap:8px}.row2 .btn{margin-top:0}
+
+
+.sheet{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;display:none}
+.sheet.on{display:block}
+.sheet-h{position:sticky;top:0;background:var(--sur);border-bottom:1px solid var(--line);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet-h b{font-size:16px}
+.sheet-b{padding:14px 14px 40px;max-width:760px;margin:0 auto}
+.x{font-size:14px;color:var(--mut);padding:6px 4px}
+
+
+.nw{font-size:12.5px;color:var(--mut);padding:7px 0;border-top:1px solid var(--line);line-height:1.45}
+.nw:first-child{border-top:0}
+.nw b{color:var(--tx);font-weight:600}
+.nw.bad b{color:var(--neg)}.nw.good b{color:var(--ac)}.nw.big b{color:var(--warn)}
+
+/* cartao compacto de oferta */
+.ofr{padding:11px 13px;border-bottom:1px solid var(--line)}
+.ofr:last-child{border-bottom:0}
+.ofr-top{display:flex;gap:9px;align-items:center;margin-bottom:9px}
+.ofr-top .nm{flex:1;min-width:0}
+.ofr-top b{display:block;font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ofr-top span{font-size:11.5px;color:var(--mut)}
+.ofr-nums{display:flex;gap:6px;margin-bottom:9px}
+.ofr-nums div{flex:1;min-width:0;background:var(--sur2);border-radius:7px;padding:6px 7px}
+.ofr-nums span{display:block;font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ofr-nums b{font-size:14px;font-weight:650;white-space:nowrap}
+.ofr-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tg{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+.tg.ok{border-color:var(--ac);color:var(--ac)}
+.tg.bad{border-color:var(--neg);color:var(--neg)}
+.tg.top{background:var(--ac);border-color:var(--ac);color:#04140d;font-weight:650}
+.ofr-act{display:flex;gap:10px;align-items:center}
+.ofr-act .btn{flex:1;padding:10px;font-size:14px;margin:0}
+.lnk{font-size:13px;color:var(--mut);padding:8px 6px;text-decoration:underline;text-underline-offset:3px}
+h1{font-size:23px;margin:0 0 6px;font-weight:650;letter-spacing:-.3px}
+.lead{font-size:14.5px;color:var(--mut);line-height:1.55}
+.lead b{color:var(--tx)}
+</style>
+</head>
+<body>
+
+<div id="game" hidden>
+  <header>
+    <div class="pat-l" id="pat-l"></div>
+    <div class="pat"><b class="num" id="pat">—</b><i id="pat-d"></i></div>
+    <div class="kpis">
+      <div class="kpi"><b id="k-cli">—</b><span>clientes</span></div>
+      <div class="kpi"><b id="k-renda">—</b><span>renda/ano</span></div>
+      <div class="kpi"><b id="k-rep">—</b><span>reputação</span></div>
+    </div>
+  </header>
+  <main id="main"></main>
+  <div class="actbar" id="actbar"></div>
+  <div class="toast" id="toast"></div>
+  <nav id="nav"></nav>
+</div>
+
+<div class="sheet" id="sheet"><div class="sheet-h"><b id="sheet-t"></b><button class="x" id="sheet-x">Fechar</button></div><div class="sheet-b" id="sheet-b"></div></div>
+
+<div class="sheet on" id="intro"><div class="sheet-b" style="padding-top:34px">
+  <div style="font-size:11.5px;color:var(--mut);letter-spacing:.05em">BNF GAMES</div>
+  <h1 style="font-size:34px;margin-top:4px">Agente</h1>
+  <p class="lead">Empresário de jogador. Mesa na sala de casa, um cliente ruim e R$ 120 mil no bolso.</p>
+  <p class="lead">Seu escritório define quem chega até você: quantos nomes por temporada, até que liga o seu alcance vai e quantas sondagens cabem na janela. Sede maior, mesa melhor — e sede leva temporada para ficar de pé.</p>
+  <p class="lead">Do jogador você vê uma <b>faixa</b>, não um número. Sondagem aperta a faixa. Assinar sem sondar é apostar.</p>
+  <p class="lead">A temporada roda de uma vez. Depois vem o relatório e a janela: propostas de clubes pelos seus clientes, mesa de renovação com o clube atual — salário, duração e status no elenco — e o cliente cobrando o que você prometeu.</p>
+  <div style="margin-top:18px">
+    <label for="nome-esc" style="display:block;font-size:12px;color:var(--mut);margin-bottom:6px">Nome da sua agência</label>
+    <input id="nome-esc" type="text" maxlength="28" placeholder="ex.: JP Sports"
+      style="width:100%;padding:12px;border-radius:8px;background:var(--sur);border:1px solid var(--line2);color:var(--tx);font:inherit">
+  </div>
+  <button class="btn" id="btn-novo" style="margin-top:10px">Abrir o escritório</button>
+  <button class="btn sec" id="btn-cont" hidden>Continuar carreira salva</button>
+  <p class="hint" style="margin-top:14px" id="intro-rec"></p>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);};
+var SAVE='agente:v3';
+var CLUBES_BR = [
+  // Serie A 2026
+  ['Flamengo', 'FLA', '#C4171E', '#101010', 88, 0, 'RJ'], ['Palmeiras', 'PAL', '#1B7A3E', '#EFE9DA', 87, 0, 'SP'],
+  ['Cruzeiro', 'CRU', '#1C3F94', '#EFE9DA', 83, 0, 'MG'], ['Botafogo', 'BOT', '#101010', '#EFE9DA', 81, 0, 'RJ'],
+  ['Bahia', 'BAH', '#1A57A8', '#D9453B', 80, 0, 'BA'], ['Sao Paulo', 'SAO', '#C4171E', '#101010', 80, 0, 'SP'],
+  ['Corinthians', 'COR', '#101010', '#EFE9DA', 79, 0, 'SP'], ['Fluminense', 'FLU', '#7C1F35', '#1B7A3E', 79, 0, 'RJ'],
+  ['Internacional', 'INT', '#C4171E', '#EFE9DA', 78, 0, 'RS'], ['Atletico-MG', 'CAM', '#101010', '#EFE9DA', 78, 0, 'MG'],
+  ['Gremio', 'GRE', '#1A57A8', '#101010', 77, 0, 'RS'], ['Bragantino', 'RBB', '#C4171E', '#EFE9DA', 76, 0, 'SP'],
+  ['Mirassol', 'MIR', '#E3B117', '#1B7A3E', 75, 0, 'SP'], ['Vasco da Gama', 'VAS', '#101010', '#EFE9DA', 75, 0, 'RJ'],
+  ['Santos', 'SAN', '#EFE9DA', '#101010', 74, 0, 'SP'], ['Vitoria', 'VIT', '#C4171E', '#101010', 72, 0, 'BA'],
+  ['Athletico-PR', 'CAP', '#C4171E', '#101010', 72, 0, 'PR'], ['Coritiba', 'CFC', '#0B7A5E', '#EFE9DA', 71, 0, 'PR'],
+  ['Chapecoense', 'CHA', '#1B7A3E', '#EFE9DA', 69, 0, 'SC'], ['Remo', 'REM', '#1A57A8', '#EFE9DA', 68, 0, 'PA'],
+  // Serie B 2026
+  ['Ceara', 'CEA', '#101010', '#EFE9DA', 66, 1, 'CE'], ['Fortaleza', 'FOR', '#1A57A8', '#C4171E', 66, 1, 'CE'],
+  ['Sport', 'SPT', '#C4171E', '#101010', 65, 1, 'PE'], ['Goias', 'GOI', '#1B7A3E', '#EFE9DA', 65, 1, 'GO'],
+  ['Cuiaba', 'CUI', '#E3B117', '#1B7A3E', 64, 1, 'MT'], ['Juventude', 'JUV', '#1B7A3E', '#EFE9DA', 63, 1, 'RS'],
+  ['Atletico-GO', 'ACG', '#C4171E', '#101010', 63, 1, 'GO'], ['Novorizontino', 'NOV', '#1A57A8', '#EFE9DA', 63, 1, 'SP'],
+  ['America-MG', 'AME', '#1B7A3E', '#EFE9DA', 63, 1, 'MG'], ['Avai', 'AVA', '#1A57A8', '#EFE9DA', 62, 1, 'SC'],
+  ['Criciuma', 'CRI', '#E3B117', '#101010', 62, 1, 'SC'], ['Ponte Preta', 'PON', '#101010', '#EFE9DA', 62, 1, 'SP'],
+  ['Nautico', 'NAU', '#C4171E', '#EFE9DA', 61, 1, 'PE'], ['Vila Nova', 'VIL', '#C4171E', '#1B7A3E', 61, 1, 'GO'],
+  ['Operario-PR', 'OPE', '#101010', '#EFE9DA', 60, 1, 'PR'], ['CRB', 'CRB', '#C4171E', '#101010', 60, 1, 'AL'],
+  ['Botafogo-SP', 'BSP', '#C4171E', '#101010', 60, 1, 'SP'], ['Londrina', 'LON', '#1A57A8', '#EFE9DA', 58, 1, 'PR'],
+  ['Sao Bernardo', 'SBE', '#E3B117', '#101010', 58, 1, 'SP'], ['Athletic', 'ATH', '#101010', '#E3B117', 57, 1, 'MG'],
+  // Serie C 2026
+  ['Paysandu', 'PAY', '#1A57A8', '#EFE9DA', 55, 2, 'PA'], ['Guarani', 'GUA', '#1B7A3E', '#EFE9DA', 55, 2, 'SP'],
+  ['Ferroviaria', 'FER', '#C4171E', '#101010', 54, 2, 'SP'], ['Amazonas', 'AMA', '#101010', '#E3B117', 54, 2, 'AM'],
+  ['Volta Redonda', 'VRE', '#101010', '#E3B117', 53, 2, 'RJ'], ['Figueirense', 'FIG', '#101010', '#EFE9DA', 53, 2, 'SC'],
+  ['Santa Cruz', 'STA', '#C4171E', '#101010', 53, 2, 'PE'], ['Brusque', 'BRU', '#1A57A8', '#EFE9DA', 52, 2, 'SC'],
+  ['Ituano', 'ITU', '#C4171E', '#101010', 52, 2, 'SP'], ['Caxias', 'CAX', '#1B7A3E', '#EFE9DA', 52, 2, 'RS'],
+  ['Confianca', 'CON', '#1A57A8', '#EFE9DA', 51, 2, 'SE'], ['Ypiranga-RS', 'YPI', '#C4171E', '#101010', 50, 2, 'RS'],
+  ['Maringa', 'MGA', '#1B7A3E', '#EFE9DA', 50, 2, 'PR'], ['Botafogo-PB', 'BPB', '#C4171E', '#101010', 50, 2, 'PB'],
+  ['Inter de Limeira', 'ILI', '#1A57A8', '#EFE9DA', 49, 2, 'SP'], ['Floresta', 'FLO', '#1B7A3E', '#101010', 49, 2, 'CE'],
+  ['Anapolis', 'ANA', '#1A57A8', '#EFE9DA', 48, 2, 'GO'], ['Itabaiana', 'ITB', '#C4171E', '#EFE9DA', 48, 2, 'SE'],
+  ['Barra-SC', 'BAR', '#101010', '#C4171E', 47, 2, 'SC'], ['Maranhao', 'MAR', '#C4171E', '#101010', 46, 2, 'MA']
+];
+
+var LIGAS = [
+  { n: 'Serie A', pais: 'Brasil', cont: 'SUL', rep: 34, vagas: 6, copa: 'Copa do Brasil', sal: 110000 },
+  { n: 'Serie B', pais: 'Brasil', cont: 'SUL', rep: 16, vagas: 0, copa: 'Copa do Brasil', sal: 22000 },
+  { n: 'Serie C', pais: 'Brasil', cont: 'SUL', rep: 0, vagas: 0, copa: 'Copa do Brasil', sal: 3000 },
+  { n: 'Premier League', pais: 'Inglaterra', cont: 'EUR', rep: 78, vagas: 4, copa: 'Copa da Inglaterra', sal: 1100000 },
+  { n: 'La Liga', pais: 'Espanha', cont: 'EUR', rep: 76, vagas: 4, copa: 'Copa do Rei', sal: 900000 },
+  { n: 'Calcio', pais: 'Italia', cont: 'EUR', rep: 70, vagas: 4, copa: 'Copa da Italia', sal: 700000 },
+  { n: 'Bundesliga', pais: 'Alemanha', cont: 'EUR', rep: 70, vagas: 4, copa: 'Copa da Alemanha', sal: 700000 },
+  { n: 'Ligue 1', pais: 'Franca', cont: 'EUR', rep: 66, vagas: 3, copa: 'Copa da Franca', sal: 600000 },
+  { n: 'Primeira Liga', pais: 'Portugal', cont: 'EUR', rep: 56, vagas: 2, copa: 'Taca de Portugal', sal: 250000 },
+  { n: 'Eredivisie', pais: 'Holanda', cont: 'EUR', rep: 54, vagas: 2, copa: 'Copa da Holanda', sal: 220000 },
+  { n: 'Liga Argentina', pais: 'Argentina', cont: 'SUL', rep: 40, vagas: 4, copa: 'Copa Argentina', sal: 90000 },
+  { n: 'Liga Colombiana', pais: 'Colombia', cont: 'SUL', rep: 30, vagas: 3, copa: 'Copa Colombia', sal: 45000 },
+  { n: 'Liga Chilena', pais: 'Chile', cont: 'SUL', rep: 28, vagas: 3, copa: 'Copa do Chile', sal: 40000 },
+  { n: 'Liga Equatoriana', pais: 'Equador', cont: 'SUL', rep: 28, vagas: 3, copa: 'Copa do Equador', sal: 35000 },
+  { n: 'Liga Uruguaia', pais: 'Uruguai', cont: 'SUL', rep: 26, vagas: 3, copa: 'Copa do Uruguai', sal: 30000 },
+  { n: 'Liga Paraguaia', pais: 'Paraguai', cont: 'SUL', rep: 26, vagas: 3, copa: 'Copa Paraguai', sal: 30000 },
+  { n: 'Liga Peruana', pais: 'Peru', cont: 'SUL', rep: 26, vagas: 3, copa: 'Copa Peru', sal: 30000 },
+  { n: 'Liga Boliviana', pais: 'Bolivia', cont: 'SUL', rep: 24, vagas: 2, copa: 'Copa Bolivia', sal: 25000 }
+];
+var CLUBES_LIGA = {
+  3: [['Manchester City', 91], ['Liverpool', 88], ['Arsenal', 87], ['Chelsea', 85], ['Manchester United', 82],
+      ['Tottenham', 82], ['Newcastle', 80], ['Aston Villa', 80], ['Brighton', 78], ['Nottingham Forest', 77],
+      ['West Ham', 76], ['Fulham', 76], ['Crystal Palace', 76], ['Brentford', 75], ['Bournemouth', 75],
+      ['Everton', 74], ['Wolverhampton', 73], ['Leeds', 72], ['Sunderland', 71], ['Burnley', 70]],
+  4: [['Real Madrid', 92], ['Barcelona', 89], ['Atletico de Madrid', 85], ['Athletic Bilbao', 80], ['Villarreal', 79],
+      ['Real Sociedad', 78], ['Betis', 78], ['Sevilla', 76], ['Valencia', 75], ['Girona', 74],
+      ['Celta de Vigo', 74], ['Osasuna', 73], ['Getafe', 73], ['Rayo Vallecano', 73], ['Mallorca', 72],
+      ['Espanyol', 71], ['Alaves', 71], ['Elche', 69], ['Levante', 68], ['Real Oviedo', 67]],
+  5: [['Inter de Milao', 86], ['Napoli', 84], ['Juventus', 84], ['Milan', 83], ['Atalanta', 81],
+      ['Roma', 80], ['Lazio', 79], ['Fiorentina', 78], ['Bologna', 77], ['Torino', 74],
+      ['Como', 74], ['Udinese', 73], ['Genoa', 72], ['Sassuolo', 71], ['Parma', 71],
+      ['Cagliari', 71], ['Verona', 70], ['Lecce', 69], ['Pisa', 68], ['Cremonese', 68]],
+  6: [['Bayern de Munique', 90], ['Bayer Leverkusen', 84], ['Borussia Dortmund', 84], ['RB Leipzig', 82],
+      ['Stuttgart', 79], ['Eintracht Frankfurt', 79], ['Freiburg', 76], ['Wolfsburg', 75], ['Werder Bremen', 74],
+      ['Borussia Monchengladbach', 74], ['Mainz', 74], ['Hoffenheim', 73], ['Union Berlin', 73], ['Augsburg', 72],
+      ['Hamburgo', 71], ['Colonia', 71], ['St. Pauli', 70], ['Heidenheim', 70]],
+  7: [['Paris Saint-Germain', 89], ['Marselha', 81], ['Monaco', 81], ['Lille', 79], ['Lyon', 78],
+      ['Nice', 77], ['Lens', 76], ['Strasbourg', 75], ['Rennes', 75], ['Brest', 73],
+      ['Toulouse', 73], ['Nantes', 71], ['Auxerre', 70], ['Lorient', 69], ['Paris FC', 69],
+      ['Le Havre', 68], ['Metz', 68], ['Angers', 68]],
+  8: [['Benfica', 82], ['Porto', 81], ['Sporting', 80], ['Braga', 77], ['Vitoria de Guimaraes', 74],
+      ['Famalicao', 71], ['Moreirense', 69], ['Estoril', 68], ['Santa Clara', 68], ['Gil Vicente', 68],
+      ['Arouca', 68], ['Casa Pia', 67], ['Rio Ave', 67], ['Nacional da Madeira', 66], ['Alverca', 65],
+      ['Estrela da Amadora', 65], ['Tondela', 65], ['AVS', 64]],
+  9: [['PSV', 80], ['Ajax', 79], ['Feyenoord', 79], ['AZ Alkmaar', 75], ['Twente', 73],
+      ['Utrecht', 73], ['NEC Nijmegen', 70], ['Go Ahead Eagles', 69], ['Sparta Rotterdam', 68], ['Heerenveen', 68],
+      ['Groningen', 68], ['Fortuna Sittard', 67], ['Zwolle', 67], ['NAC Breda', 66], ['Heracles', 66],
+      ['Excelsior', 65], ['Telstar', 64], ['Volendam', 64]],
+  10: [['River Plate', 84], ['Boca Juniors', 83], ['Racing', 79], ['Independiente', 76], ['Estudiantes', 76],
+       ['Velez Sarsfield', 75], ['Talleres', 75], ['Rosario Central', 74], ['Lanus', 74], ['San Lorenzo', 74],
+       ['Newells Old Boys', 72], ['Defensa y Justicia', 73], ['Argentinos Juniors', 73], ['Huracan', 72],
+       ['Godoy Cruz', 71], ['Banfield', 70], ['Tigre', 70], ['Platense', 70], ['Union de Santa Fe', 70], ['Instituto', 69]],
+  11: [['Atletico Nacional', 76], ['Millonarios', 72], ['Junior de Barranquilla', 72], ['America de Cali', 72],
+       ['Independiente Medellin', 71], ['Santa Fe', 71], ['Deportes Tolima', 71], ['Bucaramanga', 70],
+       ['Deportivo Cali', 70], ['Once Caldas', 69], ['Aguilas Doradas', 68], ['Pereira', 68],
+       ['Alianza', 67], ['Envigado', 66], ['Fortaleza CEIF', 66], ['La Equidad', 66]],
+  12: [['Colo-Colo', 74], ['Universidad de Chile', 73], ['Universidad Catolica', 73], ['Palestino', 70],
+       ['Coquimbo Unido', 69], ['Cobresal', 69], ['Huachipato', 69], ['Union Espanola', 68],
+       ['OHiggins', 68], ['Audax Italiano', 68], ['Everton de Vina', 67], ['Nublense', 67],
+       ['Union La Calera', 66], ['Deportes La Serena', 64], ['Deportes Iquique', 64], ['Deportes Limache', 63]],
+  13: [['Independiente del Valle', 78], ['LDU Quito', 75], ['Barcelona de Guayaquil', 73], ['Emelec', 71],
+       ['Aucas', 68], ['Universidad Catolica do Equador', 69], ['Orense', 67], ['Delfin', 66],
+       ['Macara', 66], ['Libertad de Loja', 65], ['Mushuc Runa', 65], ['Tecnico Universitario', 64]],
+  14: [['Penarol', 76], ['Nacional de Montevideu', 75], ['Liverpool de Montevideu', 70], ['Defensor Sporting', 68],
+       ['Danubio', 66], ['Cerro Largo', 66], ['Montevideo City Torque', 66], ['Boston River', 64],
+       ['Plaza Colonia', 64], ['Racing de Montevideu', 63], ['Progreso', 63], ['Miramar Misiones', 62]],
+  15: [['Olimpia', 74], ['Cerro Porteno', 74], ['Libertad', 73], ['Guarani do Paraguai', 70],
+       ['Nacional de Assuncao', 68], ['Sportivo Lugueno', 66], ['Sportivo Trinidense', 65], ['Sportivo Ameliano', 65],
+       ['General Caballero', 64], ['Dois de Maio', 64], ['Tacuary', 63], ['Recoleta', 63]],
+  16: [['Universitario', 72], ['Alianza Lima', 71], ['Sporting Cristal', 71], ['Melgar', 69],
+       ['Cusco FC', 68], ['Cienciano', 67], ['Sport Huancayo', 66], ['Deportivo Garcilaso', 66],
+       ['Alianza Atletico', 64], ['ADT', 64], ['Sport Boys', 63], ['UTC', 63]],
+  17: [['Bolivar', 71], ['The Strongest', 70], ['Always Ready', 68], ['Nacional Potosi', 66],
+       ['Oriente Petrolero', 66], ['Blooming', 65], ['Wilstermann', 65], ['Aurora', 64],
+       ['San Antonio Bulo Bulo', 64], ['Guabira', 63], ['Real Tomayapo', 63], ['Real Oruro', 62]]
+};
+function abrevDe(nome, usados) {
+  const limpo = nome.normalize('NFD').replace(/[^A-Za-z ]/g, '');
+  const p = limpo.split(' ').filter(w => w.length > 1 || /^[A-Z]$/.test(w));
+  const cand = [];
+  if (p[0]) cand.push(p[0].slice(0, 3));
+  if (p.length >= 3) cand.push(p[0][0] + p[1][0] + p[2][0]);
+  if (p.length >= 2) cand.push(p[0].slice(0, 2) + p[1][0]);
+  if (p.length >= 2) cand.push(p[0][0] + p[1].slice(0, 2));
+  if (p[1]) cand.push(p[1].slice(0, 3));
+  if (p[0]) cand.push(p[0].slice(0, 2) + (p[0][3] || p[0][2] || 'X'));
+  if (p[0]) cand.push(p[0].replace(/[aeiouAEIOU]/g, '').slice(0, 3));
+  if (p[1]) cand.push(p[1].replace(/[aeiouAEIOU]/g, '').slice(0, 3));
+  for (const c of cand) {
+    const ab = c.toUpperCase();
+    if (ab.length === 3 && !usados[ab]) { usados[ab] = 1; return ab; }
+  }
+  let base = (p[0] || 'CLU').slice(0, 2).toUpperCase(), k = 1, ab;
+  do { ab = base + (k++); } while (usados[ab]);
+  usados[ab] = 1;
+  return ab;
+}
+var ECO = LIGAS.map((l, i) => i === 0 ? 0.95 : i === 1 ? 0.55 : i === 2 ? 0.32 : i <= 6 ? 1.25 : i <= 9 ? 1.00 : 0.75);
+var PAL=[['#C4171E','#EFE9DA'],['#1A57A8','#EFE9DA'],['#101010','#EFE9DA'],['#1B7A3E','#EFE9DA'],['#E3B117','#101010'],['#7C1F35','#EFE9DA'],['#0B7A5E','#EFE9DA'],['#EFE9DA','#101010']];
+var MUNDO=(function(){
+  var us={},m=[];
+  CLUBES_BR.forEach(function(c){us[c[1]]=1;m.push({n:c[0],ab:c[1],c1:c[2],c2:c[3],nv:c[4],div0:c[5],uf:c[6]});});
+  for(var d in CLUBES_LIGA){
+    CLUBES_LIGA[d].forEach(function(x,k){
+      var pl=PAL[(Number(d)*3+k)%PAL.length];
+      m.push({n:x[0],ab:abrevDe(x[0],us),c1:pl[0],c2:pl[1],nv:x[1],div0:Number(d),uf:LIGAS[Number(d)].pais});
+    });
+  }
+  m.forEach(function(c,k){c.id=k;});
+  return m;
+})();
+
+/* ---------- utilitarios ---------- */
+function rnd(a,b){return a+Math.random()*(b-a);}
+function ri(a,b){return Math.floor(rnd(a,b+1));}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function cl(v,a,b){return v<a?a:(v>b?b:v);}
+function gs(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185*v);}
+function poisson(l){var L=Math.exp(-l),k=0,p=1;do{k++;p*=Math.random();}while(p>L);return k-1;}
+function n1(v){return (Math.round(v*10)/10).toFixed(1).replace('.',',');}
+function n2(v){return (Math.round(v*100)/100).toFixed(2).replace('.',',');}
+function din(v){
+  var a=Math.abs(v),s=v<0?'−':'';
+  if(a<1)return s+'R$ '+Math.round(a*1000)+' mil';
+  if(a<100)return s+'R$ '+n1(a)+' mi';
+  return s+'R$ '+Math.round(a)+' mi';
+}
+function pc(v){return Math.round(v*100)+'%';}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function escudo(c,t){t=t||34;return '<span style="display:inline-grid;place-items:center;width:'+t+'px;height:'+t+'px;flex:none;border-radius:7px;background:'+c.c1+';color:'+c.c2+';font-size:'+Math.round(t*0.34)+'px;font-weight:800;letter-spacing:-.3px">'+c.ab+'</span>';}
+function clube(id){return MUNDO[id];}
+function divDe(id){return S.div[id];}
+function ligaDe(id){return LIGAS[S.div[id]];}
+function refDiv(d){return S.ref[d]||60;}
+
+/* ---------- posicoes ---------- */
+var POS={GOL:{n:'Goleiro',gol:0.00},ZAG:{n:'Zagueiro',gol:0.05},LAT:{n:'Lateral',gol:0.06},
+         VOL:{n:'Volante',gol:0.09},MEI:{n:'Meia',gol:0.22},PON:{n:'Ponta',gol:0.30},ATA:{n:'Atacante',gol:0.45}};
+var ORD=['GOL','ZAG','LAT','VOL','MEI','PON','ATA'];
+var STATUS=[['fora','fora dos planos',0.04],['reserva','reserva',0.26],['rodando','rodando o elenco',0.58],['titular','titular absoluto',0.88]];
+function stIdx(s){for(var i=0;i<STATUS.length;i++)if(STATUS[i][0]===s)return i;return 1;}
+function stNome(s){return STATUS[stIdx(s)][1];}
+function stMin(s){return STATUS[stIdx(s)][2];}
+
+/* ---------- escritorio ---------- */
+var ESCR=[
+ {n:'Mesa na sala de casa',cli:4,cus:0.028,com:0.06,tr:0.05,nomes:5,sond:2,alc:18,c:0,obra:0},
+ {n:'Sala alugada no centro',cli:8,cus:0.22,com:0.06,tr:0.06,nomes:5,sond:3,alc:34,c:0.9,obra:1},
+ {n:'Escritório com equipe',cli:14,cus:0.9,com:0.07,tr:0.075,nomes:8,sond:5,alc:52,c:6,obra:1},
+ {n:'Agência nacional',cli:22,cus:3.4,com:0.08,tr:0.085,nomes:11,sond:7,alc:70,c:24,obra:2},
+ {n:'Agência com filial na Europa',cli:32,cus:11,com:0.09,tr:0.095,nomes:15,sond:10,alc:100,c:90,obra:2}
+];
+var MELH=[
+ {id:'olh',n:'Rede de olheiros',d:'Mais nomes chegam à sua mesa e a sondagem rende mais.',c:[0.5,2.5,11],t:[1,1,2]},
+ {id:'jur',n:'Departamento jurídico',d:'Clubes cedem mais fácil e sua comissão sobe 1,5 ponto por nível.',c:[0.8,4,16],t:[1,2,2]},
+ {id:'ass',n:'Assessoria de imprensa',d:'A fama dos clientes cresce além do que o campo justifica.',c:[0.6,3.2,13],t:[1,1,2]},
+ {id:'psi',n:'Suporte ao atleta',d:'Confiança do cliente cai mais devagar e ele evolui melhor.',c:[0.7,3.6,15],t:[1,2,2]}
+];
+function niv(id){return S.melh[id]||0;}
+function escr(){return ESCR[S.escr];}
+function taxaCom(){return escr().com+niv('jur')*0.015;}
+function taxaTr(){return escr().tr+niv('jur')*0.015;}
+function limCli(){return escr().cli;}
+function limSond(){return escr().sond+niv('olh')*2;}
+function alcance(){return escr().alc+niv('olh')*10;}
+
+var AGENCIAS=['Prado & Associados','Gol Sports','Vieira Talentos','MRC Management','Estrela Agência','Fair Play Brasil'];
+var NOMES=['Kaiquinho','Vitinho','Deivid','Ruan','Peterson','Jhonatan','Wesley','Cauã','Yuri','Nilsinho','Everaldo','Maicon','Léo Fumaça','Tiaguinho','Robson','Danilinho','Cleiton','Vanderson','Igor','Marcelinho','Adriel','Juan Pablo','Zé Rafael','Bruninho','Weverton','Gilmar','Alison','Paulinho','Rodriguinho','Kauê','Ítalo','Erick','Denilson','Matheusinho','Jefinho','Gabriel Melo','Luan','Otávio','Serginho','Hélio','Nicolas','Vinicinho','Emerson','Carlinhos','Rafinha','Joãozinho','Douglas','Wanderson','Ederson','Micael'];
+
+/* ---------- ciclo de mercado ---------- */
+function moverCiclo(){
+  var c=S.ciclo;
+  c.mom=cl(c.mom*0.72+gs()*0.16,-0.42,0.42);
+  c.v=cl(c.v*0.86+0.14*1+c.mom*0.30,0.62,1.55);
+  c.f=c.v>1.24?'euforia':(c.v>1.06?'aquecido':(c.v>0.92?'normal':(c.v>0.78?'frio':'crise')));
+}
+
+/* ---------- valor e salario, com a conta aberta ---------- */
+function fatorIdade(a){return a<=18?1.55:(a<=21?1.72:(a<=25?1.35:(a<=28?1.0:(a<=31?0.6:0.3))));}
+function fatorContrato(p){var r=p.ct.ate-S.temp;return r<=0?0.45:(r===1?0.68:(r===2?0.9:1));}
+function contaValor(p){
+  var b=6.5*Math.pow(cl(p.fama,18,99)/50,2.6),
+      fi=fatorIdade(p.idade),fl=0.55+ECO[divDe(p.clube)]*0.75,fc=fatorContrato(p),fm=S.ciclo.v;
+  return {base:b,idade:fi,liga:fl,contrato:fc,ciclo:fm,total:b*fi*fl*fc*fm};
+}
+function valor(p){return contaValor(p).total;}
+function salarioJusto(p,cid){
+  var d=divDe(cid===undefined?p.clube:cid);
+  return Math.max(0.02,0.5*ECO[d]*Math.pow(cl(p.fama,18,99)/55,2.3)*(0.8+cl(p.nv,20,99)/230));
+}
+function receber(v,fonte,p){
+  S.caixa+=v;S.receita+=v;S.recTemp+=v;
+  if(!S.rec)S.rec={};
+  S.rec[fonte]=(S.rec[fonte]||0)+v;
+  if(p)p.rendeu=(p.rendeu||0)+v;
+  return v;
+}
+function gastar(v,p){
+  S.caixa-=v;
+  if(p)p.custo=(p.custo||0)+v;
+  return v;
+}
+function comissaoAno(){var t=0;S.clientes.forEach(function(p){t+=p.ct.sal*taxaCom();});return t;}
+function imagemDe(p){return 0.035*ECO[divDe(p.clube)]*Math.pow(cl(p.fama,18,99)/55,2.6)*(1+niv('ass')*0.5);}
+function imagemAno(){var t=0;S.clientes.forEach(function(p){t+=imagemDe(p)*0.2;});return t;}
+function custoAno(){return escr().cus+(S.obras.length?0:0);}
+function carteira(){var t=0;S.clientes.forEach(function(p){t+=valor(p);});return t;}
+
+/* ---------- conhecimento e faixa ---------- */
+function faixa(p){
+  if(p.agencia==='VOCÊ'&&p.conh>=0.95)return {lo:p.nv,hi:p.nv,exato:true};
+  var m=18*(1-p.conh);
+  return {lo:Math.max(20,Math.round(p.est-m)),hi:Math.min(99,Math.round(p.est+m)),exato:false};
+}
+function faixaPot(p){
+  var m=22*(1-p.conh),f=faixa(p);
+  return {lo:Math.max(f.lo,Math.round(p.estPot-m)),hi:Math.min(99,Math.max(f.hi,Math.round(p.estPot+m)))};
+}
+function recalcEst(p){
+  if(p.err===undefined){p.err=gs();p.errP=gs();}
+  p.est=cl(p.nv+p.err*14*(1-p.conh),20,99);
+  p.estPot=cl(Math.max(p.est,p.pot+p.errP*16*(1-p.conh)),20,99);
+}
+function sondar(p){
+  if(S.sondUsadas>=limSond())return {ok:false,m:'Você já usou as '+limSond()+' sondagens desta janela.'};
+  if(p.conh>=0.95)return {ok:false,m:'Você já conhece '+esc(p.nome)+' de cor. Sondar de novo não acrescenta nada.'};
+  var c=custoSondar(p);
+  if(c>S.caixa)return {ok:false,m:'Sondagem custa '+din(c)+' e o caixa não cobre.'};
+  gastar(c,p);S.sondUsadas++;
+  p.conh=cl(p.conh+0.22+niv('olh')*0.05,0,0.96);
+  recalcEst(p);
+  var f=faixa(p);
+  return {ok:true,m:'Leitura mais fina: '+esc(p.nome)+' entre '+f.lo+' e '+f.hi+'.'};
+}
+function custoSondar(p){return Math.max(0.002,valor(p)*0.0015+0.002);}
+
+function evolucao(p){
+  var l=[];
+  (p.hist||[]).forEach(function(h){if(typeof h.nv==='number')l.push({t:h.t,nv:h.nv,c:h.c,j:h.j});});
+  return l.slice(-7);
+}
+/* ---------- geracao ---------- */
+function sorteiaClube(maxRep){
+  for(var k=0;k<80;k++){
+    var c=MUNDO[Math.floor(Math.random()*MUNDO.length)],d=divDe(c.id);
+    if(LIGAS[d].rep>maxRep)continue;
+    if(Math.random()<cl(1.25-(c.nv-42)/60,0.12,1.25)/1.25)return c;
+  }
+  return MUNDO[Math.floor(Math.random()*MUNDO.length)];
+}
+function gerarJogador(){
+  var org=sorteiaClube(alcance()),lg=LIGAS[divDe(org.id)];
+  var nv=cl(Math.round(rnd(30+lg.rep*0.12,58+lg.rep*0.16)+gs()*5),22,88);
+  var p={id:S.seq++,nome:pick(NOMES),pos:pick(ORD),idade:ri(16,22),clube:org.id,
+    nv:nv,pot:cl(Math.round(nv*(1+rnd(-0.02,0.34))+gs()*3),nv-2,99),
+    fama:0,conh:0.12,conf:60,agencia:Math.random()<0.32?pick(AGENCIAS):null,
+    status:pick(['reserva','rodando','fora','rodando']),t:null,hist:[],desde:0,exig:null};
+  p.fama=cl(nv+gs()*9+(lg.rep-25)*0.14,18,95);
+  p.err=gs();p.errP=gs();
+  recalcEst(p);
+  p.ct={sal:salarioJusto(p),ate:S.temp+ri(1,3)};
+  return p;
+}
+function todos(){return S.pool.concat(S.clientes);}
+function porId(id){var l=todos();for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null;}
+
+/* ---------- confianca ---------- */
+function mexeConf(p,v,txt){
+  if(!p.confLog)p.confLog=[];
+  var antes=p.conf;
+  p.conf=cl(p.conf+v,0,100);
+  var real=Math.round(p.conf-antes);
+  if(real){
+    var ult=p.confLog[p.confLog.length-1];
+    if(ult&&ult.t===S.temp&&ult.txt===txt)ult.v+=real;
+    else p.confLog.push({t:S.temp,v:real,txt:txt});
+  }
+  if(p.confLog.length>8)p.confLog=p.confLog.slice(-8);
+  return real;
+}
+/* limpa extrato herdado de carreira antiga ou impossível na linha do tempo atual */
+function limparConfLog(S2){
+  [].concat(S2.clientes||[],S2.pool||[],S2.exCli||[]).forEach(function(p){
+    if(!p.confLog)return;
+    p.confLog=p.confLog.filter(function(l){
+      return l&&typeof l.t==='number'&&l.t>=1&&l.t<=S2.temp&&typeof l.v==='number';
+    }).slice(-8);
+    if(!p.confLog.length)delete p.confLog;
+  });
+  (S2.pool||[]).forEach(function(p){delete p.confLog;});
+}
+function nivelConf(v){return v>=75?'te trata como família':(v>=55?'confia em você':(v>=35?'está desconfiado':'com um pé fora'));}
+
+/* ---------- premios ---------- */
+var PREMIOS=[
+ {id:'craque',n:'Craque do campeonato',fama:12,conf:9,rep:1.6,ok:function(p,t,ref){return t.j>=18&&t.nota>=7.7;}},
+ {id:'selecao',n:'Seleção da temporada',fama:8,conf:6,rep:1.0,ok:function(p,t,ref){return t.j>=18&&t.nota>=7.2;}},
+ {id:'artilheiro',n:'Artilheiro da liga',fama:9,conf:7,rep:1.1,ok:function(p,t,ref){return t.g>=14;}},
+ {id:'revelacao',n:'Revelação da temporada',fama:10,conf:8,rep:1.2,ok:function(p,t,ref){return p.idade<=21&&t.j>=16&&t.nota>=6.9;}},
+ {id:'garcom',n:'Melhor em campo mais vezes',fama:5,conf:4,rep:0.5,ok:function(p,t,ref){return t.j>=20&&t.nota>=6.8;}}
+];
+function darPremios(p,t,meu){
+  var ganhos=[],lg=ligaDe(p.clube);
+  PREMIOS.forEach(function(pr){
+    if(!pr.ok(p,t,refDiv(divDe(p.clube))))return;
+    if(pr.id==='revelacao'&&p.premios&&p.premios.some(function(x){return x.id==='revelacao';}))return;
+    if(Math.random()>0.72)return;
+    if(!p.premios)p.premios=[];
+    p.premios.push({id:pr.id,n:pr.n,t:S.temp,liga:lg.n});
+    p.fama=cl(p.fama+pr.fama*rnd(0.7,1.2),18,99);
+    if(meu){mexeConf(p,pr.conf,'ganhou '+pr.n.toLowerCase());S.rep=cl(S.rep+pr.rep,0,100);}
+    ganhos.push(pr.n);
+    S.evs.push({t:'<b>'+esc(p.nome)+'</b> levou o prêmio de '+pr.n+' d'+(lg.n.indexOf('Liga')===0?'a ':'o ')+lg.n+'.',k:'big'});
+  });
+  return ganhos;
+}
+
+/* ---------- assinar ---------- */
+function chanceAssinar(p){
+  var b=0.30+S.rep/110+p.conh*0.45+niv('jur')*0.05-cl(p.fama-40,0,60)/115;
+  if(p.agencia)b-=0.24;
+  if(p.recusou===S.temp)b-=0.35;
+  else if(p.recusou===S.temp-1)b-=0.12;
+  return cl(b,0.04,0.94);
+}
+function custoAssinar(p){return Math.max(0.004,valor(p)*0.003+0.004);}
+function assinar(p){
+  if(S.clientes.length>=limCli())return {ok:false,m:'Seu escritório comporta '+limCli()+' clientes.'};
+  var c=custoAssinar(p);
+  if(c>S.caixa)return {ok:false,m:'A aproximação custa '+din(c)+' e o caixa não cobre.'};
+  gastar(c,p);
+  if(Math.random()<chanceAssinar(p)){
+    p.agencia='VOCÊ';p.conf=cl(58+S.rep/6,45,88);p.desde=S.temp;p.conh=cl(p.conh+0.25,0,0.92);
+    recalcEst(p);p.confLog=[];p.valorAssin=valor(p);
+    S.pool=S.pool.filter(function(x){return x.id!==p.id;});
+    S.clientes.push(p);S.rep=cl(S.rep+0.5,0,100);
+    S.noticias.push({t:'<b>'+esc(p.nome)+'</b> ('+clube(p.clube).n+') assinou com você.',k:'good'});
+    return {ok:true,m:esc(p.nome)+' fechou com você.'};
+  }
+  S.caixa+=c*0.5;p.custo=(p.custo||0)-c*0.5;
+  p.recusou=S.temp;
+  if(Math.random()<0.4){
+    var r=pick(AGENCIAS);p.agencia=r;
+    S.noticias.push({t:esc(p.nome)+' preferiu a '+r+'.',k:'bad'});
+    return {ok:false,m:esc(p.nome)+' recusou e assinou com a '+r+'.'};
+  }
+  S.noticias.push({t:esc(p.nome)+' pediu um tempo para pensar.',k:''});
+  return {ok:false,m:esc(p.nome)+' pediu um tempo. Dá para tentar de novo mais para frente.'};
+}
+
+function segurarCliente(p){
+  var ch=cl(0.35+p.conf/160+S.rep/220+niv('psi')*0.09,0.1,0.94);
+  if(Math.random()<ch){
+    mexeConf(p,ri(5,12),'você segurou ele contra a '+p.assedio.ag);
+    S.noticias.push({t:'<b>'+esc(p.nome)+'</b> ficou com você e mandou a '+p.assedio.ag+' embora.',k:'good'});
+    p.assedio=null;return true;
+  }
+  mexeConf(p,-4,'conversa não convenceu; a '+p.assedio.ag+' segue rondando');
+  S.noticias.push({t:'A '+p.assedio.ag+' continua em cima de '+esc(p.nome)+'.',k:'bad'});
+  return false;
+}
+function rescindir(p){
+  S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
+  p.agencia=pick(AGENCIAS);
+  S.exCli.push(p);
+  S.rep=cl(S.rep-0.4,0,100);
+  S.noticias.push({t:'Você encerrou a relação com <b>'+esc(p.nome)+'</b>. Ele assinou com a '+p.agencia+'.',k:''});
+}
+
+/* ---------- negociacao com o clube atual ---------- */
+var CLAUS=[null,4,2.5,1.5];
+function chanceRenov(p,prop){
+  var c=clube(p.clube),justo=salarioJusto(p),folga=justo/Math.max(0.01,prop.sal);
+  var stGap=stIdx(prop.status)-stIdx(statusMerecido(p));
+  var b=0.62*folga-stGap*0.22+niv('jur')*0.06+cl((p.nv-c.nv+8)/45,-0.3,0.35)-(prop.anos>=4?0.08:0)+S.rep/300;
+  if(p.ct.ate>S.temp+1)b-=0.15;
+  if(prop.claus)b-=cl(0.42*(1-(prop.claus-1.4)/2.8),0,0.4)-niv('jur')*0.04;
+  return cl(b,0.03,0.96);
+}
+function statusMerecido(p){
+  var c=clube(p.clube),g=p.nv-c.nv;
+  return g>=4?'titular':(g>=-4?'rodando':(g>=-13?'reserva':'fora'));
+}
+function propostaBase(p){
+  return {sal:salarioJusto(p)*1.08,anos:3,status:statusMerecido(p),luvas:salarioJusto(p)*0.5,claus:0};
+}
+function valorClausula(p,mult){return mult?valor(p)*mult:null;}
+function fecharRenov(p,prop){
+  var com=prop.luvas*0.35+prop.sal*taxaCom();
+  p.ct={sal:prop.sal,ate:S.temp+prop.anos,cl:prop.claus?valorClausula(p,prop.claus):null};
+  p.status=prop.status;
+  mexeConf(p,prop.sal>salarioJusto(p)*1.1?9:4,'contrato novo no '+clube(p.clube).n);
+  mexeConf(p,stIdx(prop.status)>=stIdx(statusMerecido(p))?5:-4,stIdx(prop.status)>=stIdx(statusMerecido(p))?'ficou com o status que queria':'aceitou status abaixo do que esperava');
+  receber(com,'renov',p);
+  S.rep=cl(S.rep+cl(com*0.5,0.1,1.5),0,100);
+  S.noticias.push({t:'<b>'+esc(p.nome)+'</b> renovou com o '+clube(p.clube).n+' até '+(S.temp+prop.anos)+' como '+stNome(prop.status)+'. Comissão de '+din(com)+'.',k:'good'});
+  p.exig=null;
+  return com;
+}
+
+/* ---------- propostas de outros clubes ---------- */
+function paisDe(id){return LIGAS[divDe(id)].pais;}
+function art19(p,cid){
+  if(p.idade>=18)return null;
+  if(paisDe(cid)===paisDe(p.clube))return null;
+  if(p.idade>=16&&LIGAS[divDe(cid)].cont==='EUR'&&LIGAS[divDe(p.clube)].cont==='EUR')return null;
+  return p.idade>=16?'artigo 19: fora da Europa, só com 18':'artigo 19: menor de 18 não sai do país';
+}
+function interesse(p,c){
+  var d=divDe(c.id),g=p.nv-(c.nv-9);
+  return cl(0.45+g/24,0,1.5)*cl(0.5+p.fama/85,0,1.8)*cl(1.25-(LIGAS[d].rep-alcance())/60,0.1,1.3);
+}
+function gerarPropostas(p){
+  var ofs=[],tent=0,vm=valor(p);
+  var n=cl(Math.round(rnd(0,1)+p.fama/32+S.ciclo.v-0.6),0,4);
+  while(ofs.length<n&&tent++<200){
+    var c=MUNDO[Math.floor(Math.random()*MUNDO.length)];
+    if(c.id===p.clube||ofs.some(function(o){return o.c===c.id;}))continue;
+    if(art19(p,c.id))continue;
+    if(Math.random()>interesse(p,c)/1.6)continue;
+    var st=(function(){var g=p.nv-c.nv;return g>=4?'titular':(g>=-4?'rodando':'reserva');})();
+    var sal=salarioJusto(p,c.id)*rnd(0.95,1.4);
+    ofs.push({c:c.id,sal:sal,preco:vm*rnd(0.85,1.45)*(ECO[divDe(c.id)]/Math.max(0.2,ECO[divDe(p.clube)]))*0.9,
+      anos:ri(2,4),status:st,luvas:sal*rnd(0.2,0.8)});
+  }
+  return ofs.sort(function(a,b){return b.preco-a.preco;});
+}
+function aceitaLiberar(p,of){
+  if(p.ct.cl&&of.preco>=p.ct.cl)return 1;
+  var r=p.ct.ate-S.temp,base=cl(of.preco/Math.max(0.05,valor(p))-0.75,0,1)*1.5;
+  base+=niv('jur')*0.07+(p.conf<40?0.15:0)+(p.status==='fora'?0.3:0)-(r>=3?0.35:(r===2?0.15:0));
+  return cl(base,0.05,0.95);
+}
+function fecharTransfer(p,of,futuro){
+  var com=of.preco*taxaTr()+of.luvas*0.4,antigo=clube(p.clube).n;
+  if(p.sellon){
+    var extra=of.preco*p.sellon;
+    com+=extra;
+    S.noticias.push({t:'Você recebeu '+din(extra)+' do percentual de venda futura de <b>'+esc(p.nome)+'</b>.',k:'good'});
+    p.sellon=0;
+  }
+  if(futuro){com*=0.45;p.sellon=(p.sellon||0)+0.15;}
+  p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;
+  mexeConf(p,stIdx(of.status)>=2?11:-6,stIdx(of.status)>=2?'saiu para jogar no '+clube(of.c).n:'foi para o banco do '+clube(of.c).n);
+  if(of.sal>p.ct.sal*1.2)mexeConf(p,4,'ganhou bem mais de salário');
+  p.fama=cl(p.fama+cl((LIGAS[divDe(of.c)].rep-25)*0.08,0,5),18,99);
+  receber(com,'transf',p);
+  if(of.preco>=20)marcar('grande');
+  S.rep=cl(S.rep+cl(com*0.9,0.25,3),0,100);
+  S.noticias.push({t:'<b>'+esc(p.nome)+'</b> saiu do '+antigo+' para o '+clube(of.c).n+' por '+din(of.preco)+'. Sua comissão: '+din(com)+(futuro?' (com 15% da próxima venda garantidos)':'')+'.',k:'good'});
+  p.exig=null;
+  return com;
+}
+
+/* ---------- emprestimo ---------- */
+function gerarEmprestimos(p){
+  var l=[],tent=0,c0=clube(p.clube);
+  while(l.length<3&&tent++<160){
+    var c=MUNDO[Math.floor(Math.random()*MUNDO.length)];
+    if(c.id===p.clube||c.nv>=c0.nv-2||l.some(function(o){return o.c===c.id;}))continue;
+    if(art19(p,c.id))continue;
+    if(LIGAS[divDe(c.id)].rep>alcance()+12)continue;
+    var g=p.nv-c.nv,st=g>=4?'titular':(g>=-4?'rodando':'reserva');
+    if(st==='reserva'&&Math.random()<0.6)continue;
+    l.push({c:c.id,status:st,sal:p.ct.sal*rnd(0.55,0.95),emp:true});
+  }
+  return l.sort(function(a,b){return stIdx(b.status)-stIdx(a.status);});
+}
+function fecharEmprestimo(p,of){
+  var com=of.sal*taxaCom()*0.6;
+  p.emprest={de:p.clube,volta:S.temp+1};
+  p.clube=of.c;p.status=of.status;
+  mexeConf(p,stIdx(of.status)>=2?9:2,'foi emprestado ao '+clube(of.c).n+' para jogar');
+  receber(com,'emprest',p);
+  S.noticias.push({t:'<b>'+esc(p.nome)+'</b> foi emprestado ao '+clube(of.c).n+' como '+stNome(of.status)+'. Comissão de '+din(com)+'.',k:'good'});
+  return com;
+}
+
+function opiniaoCliente(p,of){
+  var motivos=[],peso=0;
+  if(stIdx(of.status)<=1&&stIdx(p.status)>=2){motivos.push('vai para o banco');peso+=0.45;}
+  if(of.sal<p.ct.sal*0.9){motivos.push('ganha menos do que ganha hoje');peso+=0.3;}
+  if(LIGAS[divDe(of.c)].rep<LIGAS[divDe(p.clube)].rep-12){motivos.push('a liga é mais fraca');peso+=0.3;}
+  if(p.exig&&p.exig.t==='jogar'&&stIdx(of.status)>=2)peso-=0.4;
+  if(p.exig&&p.exig.t==='subir'&&LIGAS[divDe(of.c)].rep>LIGAS[divDe(p.clube)].rep+8)peso-=0.4;
+  peso-=cl((p.conf-60)/150,0,0.25);
+  return {quer:peso<0.35,motivos:motivos,peso:peso};
+}
+
+/* ---------- exigencias do cliente ---------- */
+function gerarExigencia(p){
+  var mer=statusMerecido(p);
+  if(stIdx(p.status)<stIdx(mer)-1&&p.idade>=19)return {t:'jogar',txt:'quer ser pelo menos '+stNome(mer)+' ou sair do clube'};
+  if(p.ct.sal<salarioJusto(p)*0.72)return {t:'salario',txt:'ganha bem menos do que vale e quer contrato novo'};
+  if(p.fama>62&&LIGAS[divDe(p.clube)].rep<40&&p.idade<=26)return {t:'subir',txt:'quer um clube maior, de liga mais forte'};
+  return null;
+}
+function atenderExigencia(p){
+  if(!p.exig)return;
+  if(p.exig.t==='jogar'&&stIdx(p.status)>=stIdx(statusMerecido(p)))p.exig=null;
+  if(p.exig.t==='salario'&&p.ct.sal>=salarioJusto(p)*0.9)p.exig=null;
+}
+
+/* ---------- temporada ---------- */
+function campanha(){
+  /* acesso e queda no Brasil, sorteado por nivel — sem tabela */
+  [0,1].forEach(function(d){
+    var sup=MUNDO.filter(function(c){return S.div[c.id]===d;}),
+        inf=MUNDO.filter(function(c){return S.div[c.id]===d+1;});
+    if(!sup.length||!inf.length)return;
+    sup.sort(function(a,b){return (a.nv+gs()*7)-(b.nv+gs()*7);});
+    inf.sort(function(a,b){return (b.nv+gs()*7)-(a.nv+gs()*7);});
+    var caem=sup.slice(0,3),sobem=inf.slice(0,3);
+    caem.forEach(function(c){S.div[c.id]=d+1;});
+    sobem.forEach(function(c){S.div[c.id]=d;});
+    if(S.clientes.some(function(p){return sobem.some(function(c){return c.id===p.clube;});}))
+      S.evs.push({t:'<b>'+sobem[0].n+'</b> subiu para a '+LIGAS[d].n+'.',k:'good'});
+    if(S.clientes.some(function(p){return caem.some(function(c){return c.id===p.clube;});}))
+      S.evs.push({t:'<b>'+caem[0].n+'</b> caiu para a '+LIGAS[d+1].n+'.',k:'bad'});
+  });
+}
+function rodarTemporada(){
+  S.evs=[];
+  var det=[],rel=[];
+  todos().forEach(function(p){
+    var c=clube(p.clube),ref=refDiv(divDe(p.clube)),antes=p.nv;
+    /* minutos conforme status, com ajuste de nivel */
+    var m=stMin(p.status)*cl(0.75+(p.nv-(c.nv-10))/40,0.35,1.25)*rnd(0.82,1.15);
+    m=cl(m,0.02,0.96);
+    var j=Math.round(30*m),min=Math.round(j*rnd(62,88));
+    var g=poisson(POS[p.pos].gol*Math.pow(cl(p.nv/ref,0.4,1.9),2.1)*j*0.9);
+    var nota=cl(6.1+(p.nv-ref)/20+gs()*(0.55/Math.sqrt(Math.max(1,j)))*3+g*0.02,3.6,9.6);
+    /* evolucao: minutos e idade */
+    var base=(p.idade<=21?0.30:(p.idade<=25?0.18:0.05));
+    var meu=p.agencia==='VOCÊ';
+    var taxa=base*(0.2+m)*(1+(meu?niv('psi')*0.09:0));
+    p.nv=cl(Math.round(p.nv+(p.pot-p.nv)*taxa*rnd(.6,1.4)-(p.idade>=30?rnd(1,3):0)),20,99);
+    /* fama: desempenho, palco e exposicao */
+    var desemp=ref+(nota-6.1)*20+(ligaDe(p.clube).rep-30)*0.28+(meu?niv('ass')*1.5:0);
+    var peso=cl(0.14+0.5*m+0.35*cl(ligaDe(p.clube).rep/55,0,1),0.12,0.85);
+    p.fama=j?cl(p.fama+(desemp-p.fama)*peso,18,99):cl(p.fama-rnd(1.5,4),18,99);
+    /* estimativa do escritorio acompanha o que apareceu */
+    if(!meu)p.conh=cl(p.conh*0.88,0.08,0.9);
+    else p.conh=cl(p.conh+0.2,0,0.96);
+    p.err*=0.82;p.errP*=0.82;
+    recalcEst(p);
+    var grave=false;
+    if(Math.random()<0.022+cl((p.idade-27)*0.006,0,0.05)){
+      grave=true;j=Math.round(j*rnd(0.05,0.3));min=Math.round(min*0.2);g=Math.round(g*0.2);
+      p.nv=cl(p.nv-ri(1,4),20,99);p.fama=cl(p.fama-rnd(3,9),18,99);p.lesaoGrave=S.temp;
+      S.evs.push({t:'<b>'+esc(p.nome)+'</b> sofreu uma lesão grave e perdeu quase toda a temporada.',k:'bad'});
+    }
+    p.t={j:j,min:min,g:g,nota:nota,grave:grave};
+    var prem=darPremios(p,p.t,p.agencia==='VOCÊ');
+    p.t.prem=prem;
+    p.hist.push({t:S.temp,c:p.clube,j:j,g:g,nota:nota,nv:p.nv});
+    if(p.hist.length>14)p.hist=p.hist.slice(-14);
+    p.ultDelta=p.nv-antes;
+    p.idade++;
+    /* status do clube pode mudar sozinho */
+    var mer=statusMerecido(p);
+    if(stIdx(mer)>stIdx(p.status)&&Math.random()<0.55)p.status=STATUS[Math.min(3,stIdx(p.status)+1)][0];
+    else if(stIdx(mer)<stIdx(p.status)&&Math.random()<0.5)p.status=STATUS[Math.max(0,stIdx(p.status)-1)][0];
+    if(meu){
+      mexeConf(p,(m>0.7?7:(m>0.4?2:-9))+niv('psi'),m>0.7?'jogou a temporada inteira':(m>0.4?'jogou razoavelmente':'passou a temporada no banco'));
+      p.exig=gerarExigencia(p);atenderExigencia(p);
+      if(p.exig)S.evs.push({t:'<b>'+esc(p.nome)+'</b> '+p.exig.txt+'.',k:'bad'});
+      rel.push({n:p.nome,c:p.clube,j:j,g:g,nota:nota,st:p.status,d:p.nv-antes,conf:p.conf,val:valor(p),prem:prem});
+    }
+  });
+  campanha();
+  moverCiclo();
+  /* comissao recorrente e custos */
+  var com=comissaoAno(),img=imagemAno(),cus=custoAno();
+  S.clientes.forEach(function(p){p.rendeu=(p.rendeu||0)+p.ct.sal*taxaCom()+imagemDe(p)*0.2;});
+  receber(com,'salario');receber(img,'imagem');
+  S.caixa-=cus;S.custoAcum=(S.custoAcum||0)+cus;
+  det.push(['Comissão sobre salários ('+pc(taxaCom())+')',com]);
+  det.push(['Direitos de imagem (sua parte)',img]);
+  det.push(['Custo do escritório',-cus]);
+  /* obras */
+  S.obras=S.obras.filter(function(o){
+    o.restam--;
+    if(o.restam>0)return true;
+    if(o.tipo==='escr'){S.escr=o.alvo;S.noticias.push({t:'Nova sede: <b>'+ESCR[o.alvo].n+'</b>.',k:'good'});S.evs.push({t:'Sua agência agora é: <b>'+ESCR[o.alvo].n+'</b>.',k:'good'});}
+    else {S.melh[o.tipo]=o.alvo;S.evs.push({t:o.nome+' chegou ao nível '+o.alvo+'.',k:'good'});}
+    return false;
+  });
+  /* volta de emprestimo */
+  S.clientes.forEach(function(p){
+    if(p.emprest&&S.temp>=p.emprest.volta){
+      var vindo=clube(p.clube).n;
+      p.clube=p.emprest.de;p.emprest=null;
+      p.status=statusMerecido(p);
+      S.evs.push({t:'<b>'+esc(p.nome)+'</b> voltou do empréstimo no '+vindo+' para o '+clube(p.clube).n+' como '+stNome(p.status)+'.',k:''});
+    }
+  });
+  /* aposentadorias */
+  S.clientes.slice().forEach(function(p){
+    if(p.idade<33)return;
+    if(Math.random()>cl((p.idade-32)*0.24,0,0.9))return;
+    S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
+    p.aposentado=S.temp;S.exCli.push(p);
+    S.rep=cl(S.rep+1.2,0,100);
+    S.evs.push({t:'<b>'+esc(p.nome)+'</b> pendurou as chuteiras aos '+p.idade+' anos. Em '+(S.temp-p.desde)+' temporadas com você, rendeu '+din(p.rendeu||0)+'.',k:'big'});
+    if(Math.random()<0.45){
+      var novo=gerarJogador();novo.agencia=null;novo.conh=cl(novo.conh+0.35,0,0.9);
+      novo.est=cl(novo.nv+gs()*8,20,99);
+      S.pool.push(novo);
+      S.evs.push({t:esc(p.nome)+' indicou <b>'+esc(novo.nome)+'</b>, do '+clube(novo.clube).n+', e já contou tudo sobre o garoto.',k:'good'});
+    }
+  });
+  /* assedio das agencias rivais */
+  S.clientes.forEach(function(p){
+    if(p.assedio||S.temp<3)return;
+    var ch=cl((58-p.conf)/140,0,0.28)+cl(valor(p)/90,0,0.15);
+    if(Math.random()<ch){
+      p.assedio={ag:pick(AGENCIAS),t:S.temp};
+      S.evs.push({t:'A <b>'+p.assedio.ag+'</b> procurou '+esc(p.nome)+' pelas costas.',k:'bad'});
+    }
+  });
+  /* clientes que cansam de esperar */
+  var perdidos=[];
+  S.clientes.slice().forEach(function(p){
+    var risco=cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04;
+    if(Math.random()<risco){
+      var ag=pick(AGENCIAS);p.agencia=ag;
+      S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
+      S.exCli.push(p);perdidos.push(p);
+      S.evs.push({t:'<b>'+esc(p.nome)+'</b> cansou de esperar e assinou com a '+(p.assedio?p.assedio.ag:ag)+'.',k:'bad'});
+      S.rep=cl(S.rep-0.6,0,100);
+    }
+  });
+  /* mesa nova: quem chega depende do escritorio */
+  S.pool=S.pool.filter(function(p){return p.idade<=23&&Math.random()<0.4;});
+  var alvo=escr().nomes+niv('olh')*2;
+  while(S.pool.length<alvo)S.pool.push(gerarJogador());
+  /* propostas pelos seus clientes */
+  S.props={};
+  S.clientes.forEach(function(p){
+    var of=gerarPropostas(p);
+    if(of.length)S.props[p.id]=of;
+  });
+  /* rivais */
+  S.rivais.forEach(function(r){r.fat+=Math.max(0.04,r.forca*rnd(0.35,1.2)*(1+S.temp*0.09));});
+  S.hist.push({t:S.temp,cx:S.caixa,rec:S.recTemp,cli:S.clientes.length,val:carteira(),ciclo:S.ciclo.v});
+  checarMarcos();
+  S.evs.forEach(function(e){S.noticias.push(e);});
+  if(S.noticias.length>70)S.noticias=S.noticias.slice(-70);
+  if(S.hist.length>30)S.hist=S.hist.slice(-30);
+  if(S.exCli.length>14)S.exCli=S.exCli.slice(-14);
+  S.rel={t:S.temp,det:det,rel:rel,evs:S.evs,rec:S.recTemp,caixa:S.caixa,
+         props:Object.keys(S.props).length,perdidos:perdidos.length};
+  S.recTemp=0;S.temp++;S.sondUsadas=0;
+  if(S.caixa<-0.2)S.fim='O escritório quebrou: '+din(S.caixa)+' no vermelho.';
+  else if(!S.clientes.length&&S.caixa<0.02)S.fim='Sem clientes e sem caixa para ir atrás de outro.';
+  try{var r=parseFloat(localStorage.getItem('agente:rec')||'0');if(S.receita>r)localStorage.setItem('agente:rec',S.receita.toFixed(2));}catch(e){}
+}
+
+var MARCOS=[
+ {id:'elite',n:'Primeiro cliente na elite',d:'ter um cliente numa liga de reputação 30 ou mais',rep:3},
+ {id:'europa',n:'Primeiro cliente na Europa',d:'colocar um cliente num clube europeu',rep:4},
+ {id:'premio',n:'Primeiro prêmio individual',d:'um cliente seu levar prêmio de temporada',rep:3},
+ {id:'grande',n:'Primeira transferência grande',d:'fechar uma transferência acima de R$ 20 mi',rep:5},
+ {id:'cinco',n:'Cinco clientes ao mesmo tempo',d:'ter cinco na carteira de uma vez',rep:3},
+ {id:'sede',n:'Escritório com equipe',d:'chegar ao terceiro nível de sede',rep:4},
+ {id:'aposenta',n:'Uma carreira inteira ao lado',d:'ter um cliente que se aposentou com você',rep:5},
+ {id:'fat',n:'Cem milhões faturados',d:'somar R$ 100 mi de receita acumulada',rep:6}
+];
+function marcar(id){
+  if(S.marcos[id])return;
+  var m=null;MARCOS.forEach(function(x){if(x.id===id)m=x;});
+  if(!m)return;
+  S.marcos[id]=S.temp;
+  S.rep=cl(S.rep+m.rep,0,100);
+  S.evs.push({t:'<b>Marco:</b> '+m.n+'. Sua reputação subiu '+m.rep+'.',k:'big'});
+}
+function checarMarcos(){
+  S.clientes.forEach(function(p){
+    if(LIGAS[divDe(p.clube)].rep>=30)marcar('elite');
+    if(LIGAS[divDe(p.clube)].cont==='EUR')marcar('europa');
+    if(p.premios&&p.premios.length)marcar('premio');
+  });
+  if(S.clientes.length>=5)marcar('cinco');
+  if(S.escr>=2)marcar('sede');
+  if(S.receita>=100)marcar('fat');
+  if(S.exCli.some(function(p){return p.aposentado;}))marcar('aposenta');
+}
+
+/* ---------- novo jogo ---------- */
+function novoJogo(nome){
+  S={nome:nome||'Sua agência',temp:1,seq:1,caixa:0.18,rep:5,receita:0,recTemp:0,escr:0,
+     div:MUNDO.map(function(x){return x.div0;}),ref:{},
+     clientes:[],exCli:[],pool:[],obras:[],melh:{},noticias:[],hist:[],evs:[],
+     props:{},rivais:[],sondUsadas:0,fim:null,rel:null,marcos:{},rec:{},custoAcum:0,
+     ciclo:{v:1.0,mom:0,f:'normal'}};
+  calcularRefs();
+  AGENCIAS.forEach(function(n,i){S.rivais.push({n:n,forca:0.5+i*0.32,fat:0.3+i*0.6});});
+  for(var i=0;i<escr().nomes;i++)S.pool.push(gerarJogador());
+  var cand=S.pool.filter(function(p){return !p.agencia;});
+  var p0=cand.length?pick(cand):S.pool[0];
+  p0.agencia='VOCÊ';p0.conf=72;p0.desde=1;p0.conh=0.5;
+  recalcEst(p0);p0.valorAssin=valor(p0);p0.custo=0;
+  S.pool=S.pool.filter(function(x){return x.id!==p0.id;});
+  S.clientes.push(p0);
+  S.noticias.push({t:'Você abriu o escritório com um cliente: <b>'+esc(p0.nome)+'</b>, '+p0.idade+' anos, '+clube(p0.clube).n+'.',k:''});
+  S.hist.push({t:0,cx:S.caixa,rec:0,cli:1,val:carteira(),ciclo:1});
+}
+function calcularRefs(){
+  S.ref={};
+  for(var d=0;d<LIGAS.length;d++){
+    var t=0,n=0;
+    MUNDO.forEach(function(c){if(S.div[c.id]===d){t+=c.nv;n++;}});
+    S.ref[d]=n?t/n:60;
+  }
+}
+
+/* =================== estado de tela =================== */
+var S=null,aba='mesa',subEsc='sede',filtro='TODOS',aberto=null,neg=null,fichaAba='res',aval=null,ordem='valor',
+    scrollPos={},renderizada=null,relAberto=false,tToast=null;
+
+function toast(m){var el=$('#toast');el.innerHTML=m;el.classList.add('on');clearTimeout(tToast);tToast=setTimeout(function(){el.classList.remove('on');},2800);}
+function barra(v,cor){return '<div class="trk" style="height:5px"><div class="bd" style="left:0;width:'+cl(v,0,100)+'%;background:'+cor+'"></div></div>';}
+function corConf(v){return v>=60?'var(--ac)':(v>=35?'var(--warn)':'var(--neg)');}
+function faixaTxt(p){var f=faixa(p);return f.exato?String(Math.round(p.nv)):f.lo+'–'+f.hi;}
+function pendencias(){
+  var n=0;
+  S.clientes.forEach(function(p){
+    if(S.props[p.id])n++;
+    else if(p.ct.ate<=S.temp+1)n++;
+    else if(p.exig)n++;
+  });
+  return n;
+}
+
+/* =================== render =================== */
+var ABAS=[['mesa','Mesa','▦'],['cli','Clientes','◍'],['nom','Nomes','◎'],['ana','Análise','◔'],['esc','Escritório','◆']];
+function render(){
+  if(!S)return;
+  salvar();
+  $('#pat').textContent=din(S.caixa);
+  $('#pat-d').textContent=S.recTemp?'+'+din(S.recTemp).replace('R$ ',''):'';
+  $('#pat-d').className='pos';
+  $('#k-cli').textContent=S.clientes.length+'/'+limCli();
+  $('#k-renda').textContent=din(comissaoAno()+imagemAno());
+  $('#k-rep').textContent=Math.round(S.rep);
+  $('#pat-l').innerHTML='<b style="font-weight:600;font-size:12.5px">'+esc(S.nome||'Sua agência')+'</b> <span style="color:var(--mut2)">· temporada '+S.temp+' · mercado '+S.ciclo.f+'</span>';
+  $('#nav').innerHTML=ABAS.map(function(a){
+    var bd=(a[0]==='mesa'&&pendencias())?'<span class="badge">'+pendencias()+'</span>':'';
+    return '<button data-a="'+a[0]+'"'+(aba===a[0]?' aria-current="true"':'')+'><b>'+a[2]+'</b>'+a[1]+bd+'</button>';
+  }).join('');
+  var m=$('#main');
+  if(renderizada===aba)scrollPos[aba]=window.scrollY;
+  m.innerHTML=({mesa:vMesa,cli:vCli,nom:vNom,ana:vAna,esc:vEsc})[aba]();
+  renderizada=aba;
+  window.scrollTo(0,scrollPos[aba]||0);
+  renderActbar();
+  if(aberto!==null)renderSheet();
+}
+function renderActbar(){
+  var el=$('#actbar');
+  if(aba!=='mesa'){el.className='actbar';el.innerHTML='';return;}
+  el.className='actbar on';
+  var p=pendencias();
+  el.innerHTML='<button class="btn'+(p?' sec':'')+'" id="btn-temp">Rodar a temporada '+S.temp+
+    (p?' <span style="font-weight:500;opacity:.7">· '+p+' pendência'+(p>1?'s':'')+' na mesa</span>':'')+'</button>';
+}
+
+/* ---------- mesa ---------- */
+function vMesa(){
+  var h='<div class="card"><div class="card-b" style="padding:10px 13px">'+
+    '<div class="i-sub" style="margin:0"><span>Mercado <b style="color:var(--tx)">'+S.ciclo.f+'</b> · valores ×'+n2(S.ciclo.v)+'</span>'+
+    '<span>sondagens '+S.sondUsadas+'/'+limSond()+'</span></div></div></div>';
+  var itens=[];
+  S.clientes.forEach(function(p){
+    if(p.assedio)itens.push({p:p,t:'assédio',x:'a '+p.assedio.ag+' está em cima dele',k:'neg'});
+    else if(S.props[p.id])itens.push({p:p,t:'proposta',x:S.props[p.id].length+' proposta'+(S.props[p.id].length>1?'s':'')+' na mesa',k:'good'});
+    else if(p.exig)itens.push({p:p,t:'exigência',x:p.exig.txt,k:'bad'});
+    else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'contrato vencido no '+clube(p.clube).n,k:'bad'});
+    else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano de contrato',k:''});
+  });
+  h+='<div class="card"><div class="card-h"><h2>Sua mesa</h2><span>'+itens.length+' assunto'+(itens.length!==1?'s':'')+'</span></div>';
+  if(!itens.length)h+='<div class="card-b hint">Nada pendente. Dá para procurar nomes novos ou rodar a temporada.</div>';
+  itens.forEach(function(it){
+    var c=clube(it.p.clube);
+    h+='<div class="item" style="cursor:default">'+
+      '<div style="display:flex;gap:9px;align-items:center">'+escudo(c,30)+
+      '<div style="flex:1;min-width:0"><div class="i-top"><div><span class="i-pos">'+it.p.pos+'</span><span class="i-nm">'+esc(it.p.nome)+'</span></div>'+
+      '<div class="i-val" style="font-size:12.5px">'+din(valor(it.p))+'</div></div>'+
+      '<div class="i-sub"><span>'+esc(c.n)+' · '+stNome(it.p.status)+'</span><span class="'+it.k+'">'+esc(it.x)+'</span></div></div></div>'+
+      '<div class="ofr-act" style="margin-top:9px">'+
+      (it.t==='contrato'?'<button class="btn sec" data-pren="'+it.p.id+'">Negociar contrato</button>':
+        '<button class="btn sec" data-pn="'+it.p.id+'">'+(it.t==='proposta'?'Ver propostas':'Resolver')+'</button>')+
+      (it.t==='assédio'?'<button class="lnk" data-seg="'+it.p.id+'">Segurar agora</button>':
+       (it.t==='exigência'?'<button class="lnk" data-conv="'+it.p.id+'">Conversar agora</button>':
+        '<button class="lnk" data-p="'+it.p.id+'">Abrir ficha</button>'))+
+      '</div></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+/* ---------- clientes ---------- */
+function vCli(){
+  var h='<div class="card"><div class="card-h"><h2>Seus clientes</h2><span>'+S.clientes.length+' de '+limCli()+'</span></div>';
+  if(!S.clientes.length)h+='<div class="card-b hint">Sem ninguém na carteira. Vá em Nomes e assine alguém.</div>';
+  if(S.clientes.length>2)h+='<div class="chips">'+ORDENS.map(function(o){return '<button class="chip" data-ord="'+o[0]+'"'+(ordem===o[0]?' aria-pressed="true"':'')+'>'+o[1]+'</button>';}).join('')+'</div>';
+  ordenar(S.clientes.slice()).forEach(function(p){
+    var c=clube(p.clube),temProp=(S.props[p.id]||[]).length,venc=p.ct.ate<=S.temp+1;
+    h+='<div class="item" data-p="'+p.id+'">'+
+      '<div style="display:flex;gap:9px;align-items:center">'+escudo(c,30)+
+      '<div style="flex:1;min-width:0"><div class="i-top"><div><span class="i-pos">'+p.pos+'</span><span class="i-nm">'+esc(p.nome)+'</span></div>'+
+      '<div class="i-val" style="font-size:13.5px">'+din(p.ct.sal)+'<span class="mut" style="font-size:11px">/ano</span></div></div>'+
+      '<div class="i-sub"><span>'+p.idade+' anos · '+esc(c.n)+'</span><span>'+stNome(p.status)+'</span></div></div></div>'+
+      '<div class="stat"><div>nível<b>'+faixaTxt(p)+(p.ultDelta?' <span class="'+(p.ultDelta>0?'pos':'neg')+'" style="font-size:11px">'+(p.ultDelta>0?'+':'')+p.ultDelta+'</span>':'')+'</b></div>'+
+      '<div>vale<b>'+din(valor(p))+'</b></div>'+
+      '<div>contrato<b>'+(p.ct.ate<=S.temp?'vencido':p.ct.ate)+'</b></div>'+
+      '<div>confiança<b style="color:'+corConf(p.conf)+'">'+Math.round(p.conf)+'</b></div></div>'+
+      (p.exig?'<div class="i-sub"><span class="neg">'+esc(p.exig.txt)+'</span><span></span></div>':'')+
+      '<div class="ofr-act" style="margin-top:9px">'+
+      (temProp?'<button class="btn sec" data-pn="'+p.id+'">Ver '+temProp+' proposta'+(temProp>1?'s':'')+'</button>':
+       (venc?'<button class="btn sec" data-pren="'+p.id+'">Renovar contrato</button>':
+        '<button class="btn sec" data-pren="'+p.id+'">Negociar contrato</button>'))+
+      (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
+       (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':
+        '<button class="lnk" data-pn="'+p.id+'">Mercado</button>'))+
+      '</div></div>';
+  });
+  h+='</div>';
+  if(S.exCli.length){
+    h+='<div class="card"><div class="card-h"><h2>Já foram seus</h2></div><div class="card-b"><table>'+
+      '<tr><th>Nome</th><th>Onde está</th><th class="r">Vale</th></tr>'+
+      S.exCli.slice(-6).reverse().map(function(p){
+        return '<tr><td>'+esc(p.nome)+'</td><td class="mut">'+esc(clube(p.clube).n)+'</td><td class="r">'+din(valor(p))+'</td></tr>';
+      }).join('')+'</table></div></div>';
+  }
+  return h;
+}
+
+/* ---------- nomes ---------- */
+var ORDENS=[['valor','Mais valiosos'],['idade','Mais novos'],['teto','Maior teto'],['contrato','Contrato acabando']];
+function ordenar(l){
+  return l.sort(function(a,b){
+    if(ordem==='idade')return a.idade-b.idade;
+    if(ordem==='teto')return (b.estPot||b.pot)-(a.estPot||a.pot);
+    if(ordem==='contrato')return a.ct.ate-b.ct.ate;
+    return valor(b)-valor(a);
+  });
+}
+function vNom(){
+  var lista=S.pool.slice();
+  if(filtro==='LIVRES')lista=lista.filter(function(p){return !p.agencia;});
+  else if(filtro==='SOND')lista=lista.filter(function(p){return p.conh>0.3;});
+  else if(filtro!=='TODOS')lista=lista.filter(function(p){return p.pos===filtro;});
+  lista=ordenar(lista);
+  var chips=[['TODOS','Todos'],['LIVRES','Sem agente'],['SOND','Sondados']].concat(ORD.map(function(p){return [p,p];}));
+  var h='<div class="card"><div class="card-h"><h2>Nomes que chegaram</h2><span>'+escr().n+'</span></div>'+
+    '<div class="card-b hint">Seu escritório traz '+(escr().nomes+niv('olh')*2)+' nomes por temporada e alcança ligas até reputação '+alcance()+'. Sede maior, mesa melhor.</div>'+
+    '<div class="chips">'+chips.map(function(c){return '<button class="chip" data-f="'+c[0]+'"'+(filtro===c[0]?' aria-pressed="true"':'')+'>'+c[1]+'</button>';}).join('')+'</div>';
+  lista.forEach(function(p){
+    var c=clube(p.clube),ch=chanceAssinar(p),cu=custoAssinar(p),
+        podeS=S.sondUsadas<limSond()&&custoSondar(p)<=S.caixa&&p.conh<0.95,
+        podeA=cu<=S.caixa&&S.clientes.length<limCli();
+    h+='<div class="item" data-p="'+p.id+'">'+
+      '<div class="i-top"><div><span class="i-pos">'+p.pos+'</span><span class="i-nm">'+esc(p.nome)+'</span></div>'+
+      '<div class="i-val" style="font-size:12.5px">'+(p.agencia?'<span class="mut">'+esc(p.agencia)+'</span>':'<span class="pos">sem agente</span>')+'</div></div>'+
+      '<div class="i-sub"><span>'+p.idade+' anos · '+esc(c.n)+' · '+ligaDe(p.clube).n+'</span><span>'+stNome(p.status)+'</span></div>'+
+      '<div class="stat"><div>nível<b>'+faixaTxt(p)+'</b></div><div>teto<b>'+faixaPot(p).lo+'–'+faixaPot(p).hi+'</b></div>'+
+      '<div>vale<b>'+din(valor(p))+'</b></div>'+
+      '<div>leitura<b'+(p.conh>0.5?' class="pos"':'')+'>'+Math.round(p.conh*100)+'%</b></div></div>'+
+      '<div class="ofr-act" style="margin-top:9px">'+
+      '<button class="btn'+(ch>0.5?'':' sec')+'" data-sign="'+p.id+'"'+(podeA?'':' disabled')+'>Assinar · '+pc(ch)+'</button>'+
+      '<button class="lnk" data-sond="'+p.id+'"'+(podeS?'':' disabled')+'>'+(p.conh>=0.95?'conhecido':'Sondar '+din(custoSondar(p)))+'</button>'+
+      '</div></div>';
+  });
+  return h+'</div>';
+}
+
+/* ---------- escritorio ---------- */
+/* ---------- analise ---------- */
+function fonteNome(k){return {salario:'Comissão de salário',transf:'Transferências',renov:'Renovações e luvas',imagem:'Direitos de imagem',emprest:'Empréstimos'}[k]||k;}
+function roi(p){
+  var c=Math.max(0.004,p.custo||0.004);
+  return (p.rendeu||0)/c;
+}
+function vAna(){
+  var sob=carteira(),rec=comissaoAno()+imagemAno(),cus=custoAno(),marg=rec-cus;
+  var venc=S.clientes.filter(function(p){return p.ct.ate<=S.temp+1;}).length;
+  var props=0;for(var k in S.props)props+=S.props[k].length;
+  var maior=0;S.clientes.forEach(function(p){maior=Math.max(maior,p.ct.sal*taxaCom()+imagemDe(p)*0.2);});
+  var conc=rec>0?maior/rec:0;
+  var h='<div class="card"><div class="card-h"><h2>Painel da agência</h2><span>temporada '+S.temp+'</span></div><div class="card-b">'+
+    '<div class="stat" style="margin:0 0 11px">'+
+      '<div>sob representação<b>'+din(sob)+'</b></div>'+
+      '<div>receita recorrente<b class="pos">'+din(rec)+'</b></div>'+
+      '<div>custo fixo<b class="neg">'+din(cus)+'</b></div>'+
+      '<div>margem<b class="'+(marg>=0?'pos':'neg')+'">'+din(marg)+'</b></div>'+
+    '</div>'+
+    '<div class="kv"><span>Fôlego de caixa</span><b>'+(marg>=0?'positivo':(S.caixa>0?Math.max(0,Math.floor(S.caixa/Math.abs(marg)))+' temporada(s)':'no vermelho'))+'</b></div>'+
+    '<div class="kv"><span>Ticket médio por cliente</span><b>'+din(S.clientes.length?rec/S.clientes.length:0)+'</b></div>'+
+    '<div class="kv"><span>Concentração (maior fonte de receita)</span><b class="'+(conc>0.5?'neg':'')+'">'+pc(conc)+'</b></div>'+
+    '<div class="kv"><span>Receita acumulada</span><b>'+din(S.receita)+'</b></div>'+
+    '</div></div>';
+
+  /* melhor jogador */
+  var top=null;S.clientes.forEach(function(p){if(!top||valor(p)>valor(top))top=p;});
+  if(top){
+    var u=top.hist[top.hist.length-1];
+    h+='<div class="card"><div class="card-h"><h2>Principal ativo</h2><span>'+pc(rec>0?(top.ct.sal*taxaCom()+imagemDe(top)*0.2)/rec:0)+' da receita</span></div>'+
+      '<div class="card-b"><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'+escudo(clube(top.clube),34)+
+      '<div style="flex:1;min-width:0"><div class="i-nm">'+esc(top.nome)+'</div>'+
+      '<div class="i-sub" style="margin:1px 0 0"><span>'+top.idade+' anos · '+esc(clube(top.clube).n)+'</span></div></div>'+
+      '<button class="btn sec" data-p="'+top.id+'" style="width:auto;padding:8px 12px">Abrir</button></div>'+
+      '<div class="stat" style="margin:0"><div>vale<b>'+din(valor(top))+'</b></div>'+
+      '<div>salário<b>'+din(top.ct.sal)+'</b></div>'+
+      '<div>nível<b>'+faixaTxt(top)+'</b></div>'+
+      '<div>nota<b>'+(u?n2(u.nota):'—')+'</b></div></div></div></div>';
+  }
+
+  /* melhores investimentos */
+  var inv=S.clientes.concat(S.exCli).filter(function(p){return (p.rendeu||0)>0;});
+  inv.sort(function(a,b){return roi(b)-roi(a);});
+  if(inv.length){
+    h+='<div class="card"><div class="card-h"><h2>Melhores investimentos</h2><span>retorno sobre o que você gastou</span></div><div class="card-b"><table>'+
+      '<tr><th>Cliente</th><th class="r">Custou</th><th class="r">Rendeu</th><th class="r">Retorno</th></tr>'+
+      inv.slice(0,6).map(function(p){
+        var r=roi(p);
+        return '<tr><td>'+esc(p.nome)+(p.agencia==='VOCÊ'?'':' <span class="mut" style="font-size:10px">ex</span>')+'</td>'+
+          '<td class="r">'+((p.custo||0)<0.002?'—':din(p.custo))+'</td><td class="r">'+din(p.rendeu||0)+'</td>'+
+          '<td class="r '+(r>=1?'pos':'neg')+'">'+(r>=100?'99+':n1(r))+'×</td></tr>';
+      }).join('')+'</table></div></div>';
+  }
+
+  /* valorizacao */
+  var val=S.clientes.filter(function(p){return p.valorAssin;});
+  val.sort(function(a,b){return valor(b)/b.valorAssin-valor(a)/a.valorAssin;});
+  if(val.length){
+    h+='<div class="card"><div class="card-h"><h2>Valorização desde a assinatura</h2></div><div class="card-b">'+
+      val.slice(0,5).map(function(p){
+        var m=valor(p)/p.valorAssin,w=cl((m-0.5)/2.5*100,3,100);
+        return '<div style="margin-bottom:9px"><div class="i-sub" style="margin:0 0 3px"><span>'+esc(p.nome)+' · desde a temp '+(p.desde||1)+'</span>'+
+          '<span class="'+(m>=1?'pos':'neg')+'">'+n1(m)+'× · '+din(valor(p))+'</span></div>'+
+          '<div class="trk"><div class="bd" style="left:0;width:'+w+'%;background:'+(m>=1?'var(--ac)':'var(--neg)')+'"></div></div></div>';
+      }).join('')+'</div></div>';
+  }
+
+  /* receita por fonte */
+  var fontes=[],tot=0;
+  for(var f in (S.rec||{})){fontes.push([f,S.rec[f]]);tot+=S.rec[f];}
+  fontes.sort(function(a,b){return b[1]-a[1];});
+  if(tot>0){
+    h+='<div class="card"><div class="card-h"><h2>De onde veio o dinheiro</h2><span>'+din(tot)+'</span></div><div class="card-b">'+
+      fontes.map(function(f){
+        return '<div style="margin-bottom:9px"><div class="i-sub" style="margin:0 0 3px"><span>'+fonteNome(f[0])+'</span>'+
+          '<span>'+din(f[1])+' · '+pc(f[1]/tot)+'</span></div>'+
+          '<div class="trk"><div class="bd" style="left:0;width:'+cl(f[1]/tot*100,2,100)+'%;background:var(--ac-d)"></div></div></div>';
+      }).join('')+
+      '<div class="kv"><span>Custo do escritório até aqui</span><b class="neg">'+din(S.custoAcum||0)+'</b></div></div></div>';
+  }
+
+  /* pipeline */
+  h+='<div class="card"><div class="card-h"><h2>Pipeline</h2></div><div class="card-b">'+
+    '<div class="kv"><span>Propostas na mesa</span><b'+(props?' class="pos"':'')+'>'+props+'</b></div>'+
+    '<div class="kv"><span>Contratos a vencer</span><b'+(venc?' class="wrn"':'')+'>'+venc+'</b></div>'+
+    '<div class="kv"><span>Vagas no escritório</span><b>'+(limCli()-S.clientes.length)+'</b></div>'+
+    '<div class="kv"><span>Sondagens restantes</span><b>'+(limSond()-S.sondUsadas)+'</b></div>'+
+    '<div class="kv"><span>Nomes livres no radar</span><b>'+S.pool.filter(function(p){return !p.agencia;}).length+'</b></div>'+
+    '</div></div>';
+
+  /* trajetoria */
+  h+='<div class="card"><div class="card-h"><h2>Trajetória</h2></div><div class="card-b"><table>'+
+    '<tr><th>Temp.</th><th class="r">Clientes</th><th class="r">Receita</th><th class="r">Carteira</th><th class="r">Caixa</th></tr>'+
+    S.hist.slice(-8).reverse().map(function(r){
+      return '<tr><td>'+(r.t||'ini')+'</td><td class="r">'+r.cli+'</td><td class="r">'+din(r.rec)+'</td><td class="r">'+din(r.val)+'</td><td class="r"><b>'+din(r.cx)+'</b></td></tr>';
+    }).join('')+'</table></div></div>';
+  return h;
+}
+
+function vEsc(){
+  var subs=[['sede','Sede'],['estr','Estrutura'],['marcos','Marcos'],['rank','Ranking'],['nw','Notícias']];
+  var h='<div class="chips" style="border:1px solid var(--line);border-radius:9px;background:var(--sur);margin-bottom:11px">'+
+    subs.map(function(s){return '<button class="chip" data-se="'+s[0]+'"'+(subEsc===s[0]?' aria-pressed="true"':'')+'>'+s[1]+'</button>';}).join('')+'</div>';
+  return h+({sede:vSede,estr:vEstr,marcos:vMarcos,rank:vRank,nw:vNw})[subEsc]();
+}
+function vSede(){
+  var e=escr(),prox=ESCR[S.escr+1],obra=S.obras.filter(function(o){return o.tipo==='escr';})[0];
+  var h='<div class="card"><div class="card-h"><h2>'+esc(S.nome||'Sua agência')+'</h2><span><button data-nome="1" style="color:var(--info);font-size:12px">renomear</button></span></div>'+
+    '<div class="card-b"><div class="kv"><span>Sede</span><b>'+esc(e.n)+' <span class="mut" style="font-weight:400">(nível '+(S.escr+1)+' de '+ESCR.length+')</span></b></div>'+
+    '<div class="kv"><span>Clientes que cabem</span><b>'+limCli()+'</b></div>'+
+    '<div class="kv"><span>Nomes por temporada</span><b>'+(e.nomes+niv('olh')*2)+'</b></div>'+
+    '<div class="kv"><span>Sondagens por janela</span><b>'+limSond()+'</b></div>'+
+    '<div class="kv"><span>Alcance (reputação da liga)</span><b>até '+alcance()+'</b></div>'+
+    '<div class="kv"><span>Comissão de salário</span><b>'+pc(taxaCom())+'</b></div>'+
+    '<div class="kv"><span>Comissão de transferência</span><b>'+pc(taxaTr())+'</b></div>'+
+    '<div class="kv"><span>Custo por temporada</span><b class="neg">'+din(-e.cus)+'</b></div>'+
+    '<div class="kv"><span>Renda recorrente hoje</span><b class="pos">'+din(comissaoAno())+'</b></div></div>';
+  if(obra)h+='<div class="card-b" style="border-top:1px solid var(--line)"><p class="hint" style="margin:0">Mudança para <b>'+ESCR[obra.alvo].n+'</b> em andamento: fica pronta em '+obra.restam+' temporada'+(obra.restam>1?'s':'')+'.</p></div>';
+  else if(prox)h+='<div class="card-b" style="border-top:1px solid var(--line)"><p class="hint" style="margin:0 0 9px"><b>'+esc(prox.n)+'</b> — '+prox.cli+' clientes, '+prox.nomes+' nomes por temporada, alcance '+prox.alc+', comissão '+pc(prox.com)+'. Leva '+prox.obra+' temporada'+(prox.obra>1?'s':'')+' para ficar de pé.</p>'+
+    '<button class="btn'+(prox.c>S.caixa?'':' sec')+'" id="btn-sede"'+(prox.c>S.caixa?' disabled':'')+'>Montar a nova sede · '+din(prox.c)+'</button></div>';
+  return h+'</div>';
+}
+function vEstr(){
+  var h='<div class="card"><div class="card-h"><h2>Estrutura</h2><span>caixa '+din(S.caixa)+'</span></div>';
+  MELH.forEach(function(m){
+    var lv=niv(m.id),max=lv>=3,c=max?0:m.c[lv],obra=S.obras.filter(function(o){return o.tipo===m.id;})[0];
+    h+='<div class="card-b" style="border-bottom:1px solid var(--line)">'+
+      '<div class="i-top"><div class="i-nm">'+m.n+'</div><div class="i-val" style="font-size:13px">nível '+lv+'/3</div></div>'+
+      '<p class="hint" style="margin:4px 0 9px">'+m.d+'</p>'+
+      (obra?'<div class="hint wrn">Em obra: pronto em '+obra.restam+' temporada'+(obra.restam>1?'s':'')+'.</div>':
+       max?'<div class="hint pos">No máximo.</div>':
+        '<button class="btn sec" data-inv="'+m.id+'"'+(c>S.caixa?' disabled':'')+'>Subir para o nível '+(lv+1)+' · '+din(c)+' · '+m.t[lv]+' temp.</button>')+
+      '</div>';
+  });
+  return h+'</div>';
+}
+function vMarcos(){
+  var feitos=MARCOS.filter(function(m){return S.marcos[m.id];}).length;
+  var h='<div class="card"><div class="card-h"><h2>Marcos da carreira</h2><span>'+feitos+' de '+MARCOS.length+'</span></div><div class="card-b">';
+  MARCOS.forEach(function(m){
+    var t=S.marcos[m.id];
+    h+='<div class="i-sub" style="margin:0 0 10px;align-items:flex-start">'+
+      '<span><b style="color:var(--'+(t?'ac':'mut2')+')">'+(t?'✓ ':'○ ')+esc(m.n)+'</b><br><span class="mut" style="font-size:11.5px">'+esc(m.d)+'</span></span>'+
+      '<span class="'+(t?'pos':'mut')+'">'+(t?'temp '+t:'+'+m.rep+' rep')+'</span></div>';
+  });
+  return h+'</div></div>';
+}
+function vRank(){
+  var lista=S.rivais.map(function(r){return {n:r.n,f:r.fat};});
+  lista.push({n:(S.nome||'Sua agência'),f:S.receita,eu:true});
+  lista.sort(function(a,b){return b.f-a.f;});
+  var mediana=lista.map(function(x){return x.f;}).sort(function(a,b){return a-b;})[Math.floor(lista.length/2)];
+  var h='<div class="card"><div class="card-h"><h2>Agências</h2><span>faturamento acumulado</span></div><div class="card-b"><table>'+
+    '<tr><th>#</th><th>Agência</th><th class="r">Faturou</th></tr>'+
+    lista.map(function(x,i){return '<tr'+(x.eu?' class="eu"':'')+'><td>'+(i+1)+'</td><td>'+esc(x.n)+'</td><td class="r">'+din(x.f)+'</td></tr>';}).join('')+
+    '</table><div class="kv" style="margin-top:8px"><span>Contra a agência mediana</span><b class="'+(S.receita>=mediana?'pos':'neg')+'">'+(S.receita>=mediana?'+':'')+din(S.receita-mediana)+'</b></div></div></div>';
+  return h+'<button class="btn sec" id="btn-reset">Fechar o escritório e recomeçar</button>';
+}
+function vNw(){
+  var h='';
+  if(S.rel)h+='<button class="btn sec" id="btn-verrel" style="margin-bottom:11px">Reabrir o relatório da temporada '+S.rel.t+'</button>';
+  h+='<div class="card"><div class="card-h"><h2>Noticiário</h2></div><div class="card-b">'+
+    S.noticias.slice(-30).reverse().map(function(n){return '<div class="nw '+(n.k||'')+'">'+n.t+'</div>';}).join('')+'</div></div>';
+  return h;
+}
+
+/* =================== ficha =================== */
+function renderSheet(){
+  var p=porId(aberto);if(!p){fecharSheet();return;}
+  var meu=p.agencia==='VOCÊ',c=clube(p.clube),f=faixa(p),fp=faixaPot(p);
+  $('#sheet-t').textContent=p.nome;
+  var pend=(meu?((S.props[p.id]||[]).length+(p.assedio?1:0)+(p.ct.ate<=S.temp+1?1:0)+(p.exig?1:0)):0);
+  var abas=[['res','Resumo'],['car','Carreira'],['neg',meu?'Negociar':'Assinar']];
+  var h='<div style="display:flex;gap:10px;align-items:center;margin:0 0 11px">'+escudo(c,34)+
+    '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+esc(c.n)+
+      (p.emprest?' <span class="mut" style="font-weight:400;font-size:12px">(emprestado)</span>':'')+'</div>'+
+    '<div class="i-sub" style="margin:1px 0 0"><span>'+POS[p.pos].n+' · '+p.idade+' anos · '+ligaDe(p.clube).n+'</span></div></div></div>';
+  h+='<div class="chips" style="border:1px solid var(--line);border-radius:9px;background:var(--sur);margin-bottom:11px">'+
+    abas.map(function(a){
+      var bd=(a[0]==='neg'&&pend)?' <span class="badge">'+pend+'</span>':'';
+      return '<button class="chip" data-fa="'+a[0]+'"'+(fichaAba===a[0]?' aria-pressed="true"':'')+'>'+a[1]+bd+'</button>';
+    }).join('')+'</div>';
+  h+=({res:fRes,car:fCar,neg:fNeg})[fichaAba](p,meu,c,f,fp);
+  $('#sheet-b').innerHTML=h;
+  $('#sheet').classList.add('on');
+}
+
+/* ---- aba resumo ---- */
+function fRes(p,meu,c,f,fp){
+  var h='<div class="card"><div class="card-b">'+
+    '<div class="stat" style="margin:0 0 11px">'+
+      '<div>nível<b>'+faixaTxt(p)+(p.ultDelta?' <span class="'+(p.ultDelta>0?'pos':'neg')+'" style="font-size:11px">'+(p.ultDelta>0?'+':'')+p.ultDelta+'</span>':'')+'</b></div>'+
+      '<div>teto<b>'+(f.exato?String(p.pot):fp.lo+'–'+fp.hi)+'</b></div>'+
+      '<div>fama<b>'+Math.round(p.fama)+'</b></div>'+
+      '<div>vale<b>'+din(valor(p))+'</b></div>'+
+    '</div>'+
+    '<div class="kv"><span>Salário</span><b>'+din(p.ct.sal)+'/ano'+(meu?' <span class="pos" style="font-weight:400">· sua parte '+din(p.ct.sal*taxaCom())+'</span>':'')+'</b></div>'+
+    '<div class="kv"><span>Contrato</span><b>'+(p.ct.ate<=S.temp?'<span class="wrn">vencido</span>':'até '+p.ct.ate)+
+      (p.ct.cl?' <span class="mut" style="font-weight:400">· cláusula '+din(p.ct.cl)+'</span>':'')+'</b></div>'+
+    '<div class="kv"><span>No elenco</span><b>'+stNome(p.status)+'</b></div>'+
+    (p.sellon?'<div class="kv"><span>Você tem da próxima venda</span><b class="pos">'+Math.round(p.sellon*100)+'%</b></div>':'')+
+    (p.idade<18?'<div class="kv"><span>Menor de idade</span><b class="wrn">artigo 19: só no mesmo país</b></div>':'')+
+    (p.lesaoGrave===S.temp-1?'<div class="kv"><span>Saúde</span><b class="neg">voltando de lesão grave</b></div>':'')+
+    (meu?'':'<div class="kv"><span>Agente</span><b>'+(p.agencia?esc(p.agencia):'<span class="pos">nenhum</span>')+'</b></div>')+
+    '</div></div>';
+  if(p.hist.length){
+    var u=p.hist[p.hist.length-1];
+    h+='<div class="card"><div class="card-h"><h2>Última temporada</h2><span>temp '+u.t+'</span></div><div class="card-b">'+
+      '<div class="stat" style="margin:0"><div>jogos<b>'+u.j+'</b></div><div>gols<b>'+u.g+'</b></div>'+
+      '<div>nota<b>'+n2(u.nota)+'</b></div><div>nível<b class="'+(p.ultDelta>0?'pos':(p.ultDelta<0?'neg':''))+'">'+(p.ultDelta>0?'+':'')+(p.ultDelta||0)+'</b></div></div></div></div>';
+  }
+  if(meu){
+    h+='<div class="card"><div class="card-h"><h2>Confiança</h2><span>'+nivelConf(p.conf)+'</span></div><div class="card-b">'+
+      '<div class="i-sub" style="margin:0 0 4px"><span>'+Math.round(p.conf)+' de 100</span><span>sai abaixo de 35</span></div>'+
+      barra(p.conf,corConf(p.conf))+'</div></div>';
+    var avisos=[];
+    if(p.assedio)avisos.push(['a '+p.assedio.ag+' está em cima dele','neg']);
+    if(p.exig)avisos.push([p.exig.txt,'neg']);
+    if((S.props[p.id]||[]).length)avisos.push([S.props[p.id].length+' proposta(s) esperando resposta','pos']);
+    if(p.ct.ate<=S.temp+1)avisos.push([p.ct.ate<=S.temp?'contrato vencido':'último ano de contrato','wrn']);
+    if(avisos.length){
+      h+='<div class="card"><div class="card-h"><h2>Precisa de você</h2></div><div class="card-b">'+
+        avisos.map(function(a){return '<div class="nw"><b class="'+a[1]+'">'+esc(a[0])+'</b></div>';}).join('')+
+        '<div class="ofr-act" style="margin-top:10px">'+
+        ((S.props[p.id]||[]).length?'<button class="btn" data-fa="neg">Ver propostas</button>':
+          '<button class="btn" data-pren="'+p.id+'">Negociar contrato</button>')+
+        (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
+         (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
+        '</div></div></div>';
+    }
+  }else{
+    var chn=chanceAssinar(p),cu=custoAssinar(p);
+    h+='<div class="card"><div class="card-b">'+
+      '<div class="kv"><span>Chance de assinar</span><b class="'+(chn>0.5?'pos':(chn<0.25?'neg':''))+'">'+pc(chn)+'</b></div>'+
+      '<div class="kv"><span>Custo da investida</span><b>'+din(cu)+'</b></div>'+
+      '<div class="ofr-act" style="margin-top:10px">'+
+      '<button class="btn" data-sign="'+p.id+'"'+(cu>S.caixa||S.clientes.length>=limCli()?' disabled':'')+'>Procurar a família</button>'+
+      '<button class="lnk" data-sond="'+p.id+'"'+(S.sondUsadas>=limSond()||p.conh>=0.95?' disabled':'')+'>Sondar '+din(custoSondar(p))+'</button>'+
+      '</div></div></div>';
+  }
+  return h;
+}
+
+/* ---- aba carreira ---- */
+function fCar(p,meu,c,f,fp){
+  var h='',ev=evolucao(p);
+  if(ev.length){
+    var mn=99,mx=20;
+    ev.forEach(function(x){mn=Math.min(mn,x.nv);mx=Math.max(mx,x.nv);});
+    var lo=Math.max(20,mn-4),hi=Math.min(99,Math.max(mx+4,lo+12));
+    h+='<div class="card"><div class="card-h"><h2>Evolução</h2><span>'+(meu?'nível real':'leitura do escritório')+'</span></div><div class="card-b">';
+    ev.slice().reverse().forEach(function(x,i,arr){
+      var ant=arr[i+1],dl=ant?x.nv-ant.nv:null,
+          v=meu?x.nv:Math.round(x.nv+p.err*10*(1-p.conh)),
+          w=cl((v-lo)/(hi-lo)*100,4,100);
+      h+='<div style="margin-bottom:9px">'+
+        '<div class="i-sub" style="margin:0 0 3px"><span>temp '+x.t+' · '+esc(clube(x.c).n)+' · '+x.j+'J</span>'+
+        '<span><b style="color:var(--tx)">'+v+'</b>'+(dl!==null?' <span class="'+(dl>0?'pos':(dl<0?'neg':'mut'))+'">'+(dl>0?'+':'')+dl+'</span>':'')+'</span></div>'+
+        '<div class="trk"><div class="bd" style="left:0;width:'+w+'%;background:'+(dl>0?'var(--ac)':(dl<0?'var(--neg)':'var(--ac-d)'))+'"></div>'+
+        (meu?'<div class="mk" style="left:'+cl((p.pot-lo)/(hi-lo)*100,0,100)+'%"></div>':'')+'</div></div>';
+    });
+    if(meu)h+='<p class="hint" style="margin:4px 0 0">O traço é o teto: '+p.pot+'.</p>';
+    h+='</div></div>';
+  }
+  if(p.premios&&p.premios.length){
+    h+='<div class="card"><div class="card-h"><h2>Prêmios</h2><span>'+p.premios.length+'</span></div><div class="card-b">'+
+      p.premios.slice().reverse().map(function(x){
+        return '<div class="i-sub" style="margin:0 0 6px"><span><b style="color:var(--warn)">'+esc(x.n)+'</b> · '+esc(x.liga)+'</span><span>temp '+x.t+'</span></div>';
+      }).join('')+'</div></div>';
+  }
+  if(p.hist.length){
+    h+='<div class="card"><div class="card-h"><h2>Temporadas</h2></div><div class="card-b"><table>'+
+      '<tr><th>Temp.</th><th>Clube</th><th class="r">J</th><th class="r">G</th><th class="r">Nota</th></tr>'+
+      p.hist.slice(-8).reverse().map(function(x){
+        return '<tr><td>'+x.t+'</td><td class="mut">'+esc(clube(x.c).n)+'</td><td class="r">'+x.j+'</td><td class="r">'+x.g+'</td><td class="r">'+n2(x.nota)+'</td></tr>';
+      }).join('')+'</table></div></div>';
+  }
+  var cv=contaValor(p);
+  h+='<div class="card"><div class="card-h"><h2>Quanto ele vale</h2><span>'+din(cv.total)+'</span></div><div class="card-b">'+
+    '<div class="kv"><span>Base pela fama '+Math.round(p.fama)+'</span><b>'+din(cv.base)+'</b></div>'+
+    '<div class="kv"><span>Idade '+p.idade+'</span><b>×'+n2(cv.idade)+'</b></div>'+
+    '<div class="kv"><span>Liga</span><b>×'+n2(cv.liga)+'</b></div>'+
+    '<div class="kv"><span>Contrato</span><b>×'+n2(cv.contrato)+'</b></div>'+
+    '<div class="kv"><span>Ciclo ('+S.ciclo.f+')</span><b>×'+n2(cv.ciclo)+'</b></div></div></div>';
+  h+='<div class="card"><div class="card-h"><h2>Leitura do escritório</h2><span>'+Math.round(p.conh*100)+'%</span></div><div class="card-b">'+
+    (p.conh>=0.95?'<p class="hint pos" style="margin:0">Você conhece esse de cor: nível e teto cravados, sem faixa.</p>':
+      '<p class="hint" style="margin:0 0 9px">Cada sondagem aperta a faixa em volta da verdade. Cliente seu você vai conhecendo sozinho, uma temporada por vez.</p>'+
+      '<button class="btn sec" data-sond="'+p.id+'"'+(S.sondUsadas>=limSond()||custoSondar(p)>S.caixa?' disabled':'')+'>Sondar · '+din(custoSondar(p))+' ('+S.sondUsadas+'/'+limSond()+')</button>')+
+    '</div></div>';
+  return h;
+}
+
+/* ---- aba negociar ---- */
+function fNeg(p,meu,c,f,fp){
+  var h='';
+  if(!meu){
+    var chn=chanceAssinar(p),cu=custoAssinar(p);
+    h+='<div class="card"><div class="card-h"><h2>Aproximação</h2></div><div class="card-b">'+
+      '<div class="kv"><span>Custo da investida</span><b>'+din(cu)+'</b></div>'+
+      '<div class="kv"><span>Leitura do escritório</span><b>'+Math.round(p.conh*100)+'%</b></div>'+
+      '<div class="kv"><span>Chance de assinar</span><b class="'+(chn>0.5?'pos':(chn<0.25?'neg':''))+'">'+pc(chn)+'</b></div>'+
+      '<button class="btn" data-sign="'+p.id+'" style="margin-top:10px"'+(cu>S.caixa||S.clientes.length>=limCli()?' disabled':'')+'>Procurar o jogador e a família</button>'+
+      (S.clientes.length>=limCli()?'<p class="hint" style="margin:9px 0 0">Escritório lotado: '+limCli()+' clientes.</p>':'')+
+      '</div></div>';
+    return h;
+  }
+  if(p.assedio){
+    h+='<div class="card"><div class="card-h"><h2>Assédio</h2><span>'+esc(p.assedio.ag)+'</span></div><div class="card-b">'+
+      '<p class="hint" style="margin:0 0 9px">A <b>'+esc(p.assedio.ag)+'</b> procurou ele por fora. Enquanto isso estiver de pé, o risco de perder ele na virada sobe muito.</p>'+
+      '<button class="btn" data-seg="'+p.id+'">Sentar com ele e segurar</button></div></div>';
+  }
+  var ofs=S.props[p.id];
+  if(ofs&&ofs.length){
+    var melhor=0,mx=-1;
+    ofs.forEach(function(o,i){var cm=o.preco*taxaTr()+o.luvas*0.4;if(cm>mx){mx=cm;melhor=i;}});
+    h+='<div class="card"><div class="card-h"><h2>Propostas de clubes</h2><span>'+ofs.length+'</span></div>';
+    ofs.forEach(function(o,i){
+      var cc=clube(o.c),com=o.preco*taxaTr()+o.luvas*0.4,lib=aceitaLiberar(p,o),claus=p.ct.cl&&o.preco>=p.ct.cl;
+      h+='<div class="ofr">'+
+        '<div class="ofr-top">'+escudo(cc,30)+
+          '<div class="nm"><b>'+esc(cc.n)+'</b><span>'+LIGAS[divDe(o.c)].n+' · '+o.anos+' anos</span></div>'+
+          (i===melhor&&ofs.length>1?'<span class="tg top">melhor comissão</span>':'')+'</div>'+
+        '<div class="ofr-nums">'+
+          '<div><span>salário</span><b>'+din(o.sal).replace('R$ ','')+(o.sal>p.ct.sal*1.05?' <span class="pos" style="font-size:11px">↑</span>':'')+'</b></div>'+
+          '<div><span>transferência</span><b>'+din(o.preco).replace('R$ ','')+'</b></div>'+
+          '<div><span>sua comissão</span><b class="pos">'+din(com).replace('R$ ','')+'</b></div></div>'+
+        '<div class="ofr-chips">'+
+          '<span class="tg '+(stIdx(o.status)>=2?'ok':(stIdx(o.status)<1?'bad':''))+'">'+stNome(o.status)+'</span>'+
+          '<span class="tg '+(claus||lib>0.6?'ok':(lib<0.3?'bad':''))+'">'+(claus?'cláusula paga':'liberação '+pc(lib))+'</span></div>'+
+        '<div class="ofr-act"><button class="btn" data-tr="'+p.id+':'+i+'">Levar ao '+esc(c.n)+'</button>'+
+        '<button class="lnk" data-rec="'+p.id+':'+i+'">Recusar</button></div>'+
+        (aval&&aval.pid===p.id&&aval.idx===i?
+          '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
+          '<p class="hint" style="margin:0 0 9px"><b class="neg">'+esc(p.nome)+' não quer:</b> '+esc(aval.motivos.join(', '))+'. O clube liberou; a decisão é sua.</p>'+
+          '<div class="row2"><button class="btn" data-forca="'+p.id+':'+i+'">Forçar</button>'+
+          '<button class="btn sec" data-desiste="1">Desistir</button></div></div>':'')+
+        '<div style="margin-top:8px"><button class="lnk" data-trf="'+p.id+':'+i+'">Fechar por metade da comissão + 15% da próxima venda</button></div></div>';
+    });
+    h+='</div>';
+  }
+  var emps=S.emps&&S.emps[p.id];
+  if(emps){
+    h+='<div class="card"><div class="card-h"><h2>Empréstimo</h2><span>'+emps.length+'</span></div>';
+    if(!emps.length)h+='<div class="card-b hint">Nenhum clube menor quis.</div>';
+    emps.forEach(function(o,i){
+      var cc=clube(o.c);
+      h+='<div class="ofr">'+
+        '<div class="ofr-top">'+escudo(cc,30)+'<div class="nm"><b>'+esc(cc.n)+'</b><span>'+LIGAS[divDe(o.c)].n+' · 1 temporada</span></div></div>'+
+        '<div class="ofr-nums"><div><span>salário assumido</span><b>'+din(o.sal).replace('R$ ','')+'</b></div>'+
+        '<div><span>sua comissão</span><b class="pos">'+din(o.sal*taxaCom()*0.6).replace('R$ ','')+'</b></div></div>'+
+        '<div class="ofr-chips"><span class="tg '+(stIdx(o.status)>=2?'ok':'')+'">'+stNome(o.status)+'</span></div>'+
+        '<div class="ofr-act"><button class="btn" data-emp="'+p.id+':'+i+'">Emprestar</button></div></div>';
+    });
+    h+='</div>';
+  }else if(!p.emprest){
+    h+='<button class="btn sec" data-buscaremp="'+p.id+'">Buscar empréstimo para ele jogar</button>';
+  }
+  if(!neg||neg.id!==p.id){
+    h+='<button class="btn sec" data-abrirneg="'+p.id+'">Negociar contrato com o '+esc(c.n)+'</button>';
+  }else{
+    var pr=neg.prop,ch=chanceRenov(p,pr),com2=pr.luvas*0.35+pr.sal*taxaCom();
+    h+='<div class="card"><div class="card-h"><h2>Mesa com o '+esc(c.n)+'</h2><span class="'+(ch>0.55?'pos':(ch<0.3?'neg':''))+'">'+pc(ch)+' de aceite</span></div><div class="card-b">'+
+      '<div class="kv"><span>Salário pedido</span><b>'+din(pr.sal)+'/ano</b></div>'+
+      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="sal:-">−</button><button class="btn sec" data-neg="sal:+">+ salário</button></div>'+
+      '<div class="kv"><span>Status exigido</span><b>'+stNome(pr.status)+'</b></div>'+
+      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="st:-">−</button><button class="btn sec" data-neg="st:+">+ status</button></div>'+
+      '<div class="kv"><span>Duração</span><b>'+pr.anos+' temporadas</b></div>'+
+      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="an:-">−</button><button class="btn sec" data-neg="an:+">+ anos</button></div>'+
+      '<div class="kv"><span>Cláusula</span><b>'+(pr.claus?din(valorClausula(p,CLAUS[pr.claus])):'sem cláusula')+'</b></div>'+
+      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="cl:-">−</button><button class="btn sec" data-neg="cl:+">+ cláusula</button></div>'+
+      '<div class="kv"><span>Mercado paga</span><b>'+din(salarioJusto(p))+'</b></div>'+
+      '<div class="kv"><span>Clube acha justo</span><b>'+stNome(statusMerecido(p))+'</b></div>'+
+      '<div class="kv"><span>Sua comissão se fechar</span><b class="pos">'+din(com2)+'</b></div>'+
+      '<button class="btn" data-prop="'+p.id+'" style="margin-top:10px">Propor ao clube</button>'+
+      '<button class="lnk" data-neg="fechar" style="display:block;margin:8px auto 0">Sair da mesa</button></div></div>';
+  }
+  h+='<div class="card" style="margin-top:11px"><div class="card-h"><h2>Com o jogador</h2><span>confiança '+Math.round(p.conf)+'</span></div><div class="card-b">'+
+    (p.exig?'<p class="hint" style="margin:0 0 9px"><b class="neg">'+esc(p.nome)+' '+esc(p.exig.txt)+'.</b></p>':
+      '<p class="hint" style="margin:0 0 9px">Nada pendente com ele.</p>')+
+    '<button class="btn sec" data-conv="'+p.id+'">Conversar e prometer solução</button>'+
+    '<button class="lnk" data-resc="'+p.id+'" style="display:block;margin:10px auto 0">Encerrar a relação</button></div></div>';
+  if(p.confLog&&p.confLog.length){
+    h+='<div class="card"><div class="card-h"><h2>Confiança</h2><span>'+Math.round(p.conf)+' · '+nivelConf(p.conf)+'</span></div><div class="card-b">'+
+      '<p class="hint" style="margin:0 0 9px">Minutos e contrato bom sobem; banco, promessa quebrada e proposta recusada descem.</p>'+
+      p.confLog.slice().reverse().map(function(l){
+        return '<div class="i-sub" style="margin:0 0 5px"><span>temp '+l.t+' · '+esc(l.txt)+'</span><span class="'+(l.v>=0?'pos':'neg')+'">'+(l.v>=0?'+':'')+l.v+'</span></div>';
+      }).join('')+'</div></div>';
+  }
+  return h;
+}
+function abrirJogador(id){aberto=id;fichaAba='res';neg=null;renderSheet();}
+function fecharSheet(){aberto=null;neg=null;relAberto=false;$('#sheet').classList.remove('on');$('#sheet-b').innerHTML='';}
+
+/* =================== relatorio anual =================== */
+function abrirRel(){
+  var b=S.rel;
+  $('#sheet-t').textContent=S.fim?'Fim de linha':'Relatório da temporada '+b.t;
+  var h='';
+  if(S.fim)h+='<h1>Acabou</h1><p class="lead">'+S.fim+'</p>';
+  h+='<div class="card"><div class="card-h"><h2>Caixa</h2><span>'+din(b.rec)+' faturados</span></div><div class="card-b">'+
+    b.det.map(function(d){return '<div class="kv"><span>'+esc(d[0])+'</span><b class="'+(d[1]>=0?'pos':'neg')+'">'+din(d[1])+'</b></div>';}).join('')+
+    '<div class="kv"><span>Caixa agora</span><b>'+din(b.caixa)+'</b></div>'+
+    '<div class="kv"><span>Ciclo de mercado</span><b>×'+n2(S.ciclo.v)+' ('+S.ciclo.f+')</b></div></div></div>';
+  if(b.rel.length){
+    h+='<div class="card"><div class="card-h"><h2>Seus clientes</h2></div><div class="card-b"><table>'+
+      '<tr><th>Cliente</th><th class="r">J</th><th class="r">G</th><th class="r">Nota</th><th class="r">Nível</th><th class="r">Vale</th></tr>'+
+      b.rel.map(function(j){
+        return '<tr><td>'+esc(j.n)+(j.prem&&j.prem.length?' <span style="color:var(--warn);font-size:10px">★</span>':'')+'</td><td class="r">'+j.j+'</td><td class="r">'+j.g+'</td><td class="r">'+n2(j.nota)+'</td>'+
+          '<td class="r '+(j.d>2?'pos':(j.d<0.5?'neg':''))+'">'+(j.d>=0?'+':'−')+n1(Math.abs(j.d))+'</td><td class="r">'+din(j.val)+'</td></tr>';
+      }).join('')+'</table></div></div>';
+  }
+  if(b.props)h+='<div class="card"><div class="card-b hint"><b>'+b.props+' cliente'+(b.props>1?'s receberam':' recebeu')+' proposta.</b> Está tudo na Mesa.</div></div>';
+  if(b.evs.length){
+    h+='<div class="card"><div class="card-h"><h2>O que aconteceu</h2></div><div class="card-b">'+
+      b.evs.map(function(e){return '<div class="nw '+(e.k||'')+'">'+e.t+'</div>';}).join('')+'</div></div>';
+  }
+  h+='<button class="btn" id="btn-fecharrel">'+(S.fim?'Abrir outro escritório':'Ir para a mesa da temporada '+S.temp)+'</button>';
+  $('#sheet-b').innerHTML=h;
+  $('#sheet').classList.add('on');
+  aberto=null;relAberto=true;
+}
+
+/* =================== save =================== */
+function salvar(){try{localStorage.setItem(SAVE,JSON.stringify(S));}catch(e){}}
+function carregar(){
+  try{
+    var r=localStorage.getItem(SAVE);if(!r)return null;
+    var o=JSON.parse(r);
+    if(!o||!o.temp)return null;
+    if(!o.div||o.div.length!==MUNDO.length)return null;
+    if(!o.clientes||!o.pool||!o.ciclo)return null;
+    limparConfLog(o);
+    return o;
+  }catch(e){return null;}
+}
+
+/* =================== eventos =================== */
+document.addEventListener('click',function(ev){
+  var t=ev.target.closest('[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
+  if(!t)return;
+  if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
+  var d=t.dataset;
+  if(d.a){scrollPos[aba]=window.scrollY;aba=d.a;render();return;}
+  if(d.se){subEsc=d.se;render();return;}
+  if(d.fa){fichaAba=d.fa;renderSheet();return;}
+  if(d.nome){
+    var nv2=prompt('Nome da agência:',S.nome||'');
+    if(nv2&&nv2.trim())S.nome=nv2.trim().slice(0,28);
+    render();return;
+  }
+  if(d.f){filtro=d.f;render();return;}
+  if(d.p){abrirJogador(+d.p);return;}
+  if(d.sond){var ps=porId(+d.sond);if(ps){var r=sondar(ps);toast(r.m);}render();return;}
+  if(d.sign){var pa=porId(+d.sign);if(pa){var r2=assinar(pa);toast(r2.m);if(r2.ok)fecharSheet();}render();return;}
+  if(d.ord){ordem=d.ord;render();return;}
+  if(d.pn){aberto=+d.pn;fichaAba='neg';neg=null;aval=null;renderSheet();return;}
+  if(d.pren){
+    var pj0=porId(+d.pren);
+    if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg={id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
+    return;
+  }
+  if(d.desiste){aval=null;renderSheet();return;}
+  if(d.forca){
+    var pv=d.forca.split(':'),pj=porId(+pv[0]),ofv=S.props[+pv[0]][+pv[1]];
+    if(pj&&ofv){
+      mexeConf(pj,-12,'você forçou a ida para o '+clube(ofv.c).n+' contra a vontade dele');
+      var cf=fecharTransfer(pj,ofv,aval&&aval.futuro);
+      delete S.props[pj.id];aval=null;
+      toast('Fechado no grito. Comissão de '+din(cf)+'.');fecharSheet();
+    }
+    render();return;
+  }
+  if(d.trf||d.tr){
+    var chave=d.trf||d.tr,futuro=!!d.trf;
+    var pp=chave.split(':'),pt=porId(+pp[0]),of=S.props[+pp[0]][+pp[1]];
+    if(pt&&of){
+      if(Math.random()<aceitaLiberar(pt,of)){
+        var op=opiniaoCliente(pt,of);
+        if(!op.quer){
+          aval={pid:pt.id,idx:+pp[1],motivos:op.motivos.length?op.motivos:['não gostou do destino'],futuro:futuro};
+          toast(esc(pt.nome)+' não quer ir.');
+          render();return;
+        }
+        var com=fecharTransfer(pt,of,futuro);delete S.props[pt.id];aval=null;
+        toast('Negócio fechado. Comissão de '+din(com)+'.');fecharSheet();
+      }else{
+        S.props[pt.id]=S.props[pt.id].filter(function(x,i){return i!==+pp[1];});
+        mexeConf(pt,-4,'o clube barrou a saída dele');
+        S.noticias.push({t:'O '+clube(pt.clube).n+' recusou liberar <b>'+esc(pt.nome)+'</b> para o '+clube(of.c).n+'.',k:'bad'});
+        toast('O clube barrou a saída.');
+      }
+    }
+    render();return;
+  }
+  if(d.rec){
+    var pr3=d.rec.split(':'),pj3=porId(+pr3[0]),of3=S.props[+pr3[0]][+pr3[1]];
+    if(pj3&&of3){
+      S.props[pj3.id]=S.props[pj3.id].filter(function(x,i){return i!==+pr3[1];});
+      if(!S.props[pj3.id].length)delete S.props[pj3.id];
+      var bom=of3.sal>pj3.ct.sal*1.15||stIdx(of3.status)>stIdx(pj3.status);
+      if(bom)mexeConf(pj3,-5,'você recusou a proposta do '+clube(of3.c).n);
+      S.noticias.push({t:'Você recusou a proposta do '+clube(of3.c).n+' por <b>'+esc(pj3.nome)+'</b>.',k:''});
+      toast(bom?'Recusada. Ele queria essa.':'Recusada.');
+    }
+    render();return;
+  }
+  if(d.resc){
+    var pr4=porId(+d.resc);
+    if(pr4&&confirm('Encerrar a relação com '+pr4.nome+'? Ele vai para outra agência.')){
+      rescindir(pr4);fecharSheet();toast('Relação encerrada.');
+    }
+    render();return;
+  }
+  if(d.seg){var pg=porId(+d.seg);if(pg&&pg.assedio){var ok=segurarCliente(pg);toast(ok?'Ele ficou.':'Não convenceu. A rival segue rondando.');}render();return;}
+  if(d.buscaremp){
+    var pe=porId(+d.buscaremp);
+    if(pe){if(!S.emps)S.emps={};S.emps[pe.id]=gerarEmprestimos(pe);
+      toast(S.emps[pe.id].length?S.emps[pe.id].length+' clube(s) topam.':'Ninguém quis levar emprestado.');}
+    render();return;
+  }
+  if(d.emp){
+    var pv=d.emp.split(':'),pj5=porId(+pv[0]),of5=S.emps[+pv[0]][+pv[1]];
+    if(pj5&&of5){var c5=fecharEmprestimo(pj5,of5);delete S.emps[pj5.id];toast('Emprestado. Comissão de '+din(c5)+'.');}
+    render();return;
+  }
+  if(d.abrirneg){var pn=porId(+d.abrirneg);if(pn)neg={id:pn.id,prop:propostaBase(pn)};render();return;}
+  if(d.neg){
+    if(d.neg==='fechar'){neg=null;render();return;}
+    var pn2=porId(neg.id),pr=neg.prop,pp2=d.neg.split(':'),sinal=pp2[1]==='+'?1:-1;
+    if(pp2[0]==='sal'){pr.sal=Math.max(0.02,pr.sal*(sinal>0?1.15:0.88));pr.luvas=pr.sal*0.5;}
+    if(pp2[0]==='st'){var i2=cl(stIdx(pr.status)+sinal,0,3);pr.status=STATUS[i2][0];}
+    if(pp2[0]==='an'){pr.anos=cl(pr.anos+sinal,1,5);}
+    if(pp2[0]==='cl'){pr.claus=cl((pr.claus||0)+sinal,0,3);}
+    render();return;
+  }
+  if(d.prop){
+    var pf=porId(+d.prop),prop=neg.prop;
+    if(Math.random()<chanceRenov(pf,prop)){
+      var c2=fecharRenov(pf,prop);neg=null;
+      toast('Renovado. Comissão de '+din(c2)+'.');
+    }else{
+      mexeConf(pf,-2,'renovação travada no '+clube(pf.clube).n);
+      neg.prop.sal*=0.94;
+      toast('O '+clube(pf.clube).n+' recusou. Eles voltaram com menos.');
+      S.noticias.push({t:'O '+clube(pf.clube).n+' recusou sua proposta por <b>'+esc(pf.nome)+'</b>.',k:''});
+    }
+    render();return;
+  }
+  if(d.conv){
+    var pc2=porId(+d.conv);
+    if(pc2){
+      mexeConf(pc2,ri(3,9)+niv('psi')*2,'você conversou e prometeu resolver');
+      pc2.promessa=S.temp;
+      toast('Conversa feita. Ele topa esperar mais uma temporada.');
+    }
+    render();return;
+  }
+  if(d.inv){
+    MELH.forEach(function(m){
+      var lv=niv(m.id);
+      if(m.id!==d.inv||lv>=3)return;
+      if(S.obras.some(function(o){return o.tipo===m.id;}))return;
+      if(m.c[lv]>S.caixa)return;
+      S.caixa-=m.c[lv];
+      S.obras.push({tipo:m.id,alvo:lv+1,restam:m.t[lv],nome:m.n});
+      S.noticias.push({t:m.n+' em obra: pronto em '+m.t[lv]+' temporada(s).',k:''});
+    });
+    render();return;
+  }
+  if(t.id==='btn-sede'){
+    var px=ESCR[S.escr+1];
+    if(px&&px.c<=S.caixa&&!S.obras.some(function(o){return o.tipo==='escr';})){
+      S.caixa-=px.c;S.obras.push({tipo:'escr',alvo:S.escr+1,restam:px.obra,nome:px.n});
+      S.noticias.push({t:'Nova sede contratada: '+px.n+', pronta em '+px.obra+' temporada(s).',k:''});
+    }
+    render();return;
+  }
+  if(t.id==='btn-temp'){rodarTemporada();neg=null;render();abrirRel();return;}
+  if(t.id==='btn-verrel'){abrirRel();return;}
+  if(t.id==='sheet-x'){fecharSheet();render();return;}
+  if(t.id==='btn-fecharrel'){
+    if(S.fim){
+      try{localStorage.removeItem(SAVE);}catch(e){}
+      S=null;fecharSheet();$('#game').hidden=true;$('#btn-novo').hidden=false;$('#btn-cont').hidden=true;
+      $('#intro').classList.add('on');return;
+    }
+    fecharSheet();aba='mesa';render();return;
+  }
+  if(t.id==='btn-reset'){
+    if(confirm('Fechar o escritório e recomeçar?')){
+      try{localStorage.removeItem(SAVE);}catch(e){}
+      S=null;fecharSheet();$('#game').hidden=true;$('#btn-novo').hidden=false;$('#btn-cont').hidden=true;
+      $('#intro').classList.add('on');
+    }
+    return;
+  }
+  if(t.id==='btn-novo'){
+    var el=$('#nome-esc'),nm=el&&el.value?el.value.trim().slice(0,28):'';
+    novoJogo(nm||'Sua agência');$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();return;}
+  if(t.id==='btn-cont'){S=carregar();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();if(S.fim)abrirRel();return;}
+});
+
+var sv=carregar();
+if(sv&&sv.temp){
+  $('#btn-cont').hidden=false;
+  $('#btn-cont').textContent='Continuar — temporada '+sv.temp+', '+sv.clientes.length+' cliente'+(sv.clientes.length!==1?'s':'');
+}
+try{var rec=parseFloat(localStorage.getItem('agente:rec')||'0');
+  if(rec)$('#intro-rec').textContent='Seu recorde de faturamento: '+din(rec)+'.';}catch(e){}
+})();
+</script>
+</body>
+</html>
