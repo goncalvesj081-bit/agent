@@ -987,16 +987,49 @@ function vMesa(){
   var h='<div class="card"><div class="card-b" style="padding:10px 13px">'+
     '<div class="i-sub" style="margin:0"><span>Mercado <b style="color:var(--tx)">'+S.ciclo.f+'</b> · valores ×'+n2(S.ciclo.v)+'</span>'+
     '<span>sondagens '+S.sondUsadas+'/'+limSond()+'</span></div></div></div>';
+  /* propostas resolvidas em lote, sem entrar em ficha */
+  var comProp=S.clientes.filter(function(p){return (S.props[p.id]||[]).length;});
+  if(comProp.length){
+    comProp.sort(function(a,b){return melhorOf(b).com-melhorOf(a).com;});
+    h+='<div class="card"><div class="card-h"><h2>Propostas da janela</h2><span>'+comProp.length+' cliente'+(comProp.length>1?'s':'')+'</span></div>';
+    comProp.forEach(function(p){
+      var m=melhorOf(p),o=m.of,i=m.i,cc=clube(o.c),qtd=S.props[p.id].length,
+          lib=aceitaLiberar(p,o),claus=p.ct.cl&&o.preco>=p.ct.cl;
+      h+='<div class="ofr">'+
+        '<div class="ofr-top">'+escudo(cc,30)+
+          '<div class="nm"><b>'+esc(p.nome)+' → '+esc(cc.n)+'</b>'+
+          '<span>'+esc(clube(p.clube).n)+' · '+LIGAS[divDe(o.c)].n+(qtd>1?' · melhor de '+qtd:'')+'</span></div></div>'+
+        '<div class="ofr-nums">'+
+          '<div><span>salário</span><b>'+din(o.sal).replace('R$ ','')+'</b></div>'+
+          '<div><span>transferência</span><b>'+din(o.preco).replace('R$ ','')+'</b></div>'+
+          '<div><span>sua comissão</span><b class="pos">'+din(m.com).replace('R$ ','')+'</b></div></div>'+
+        '<div class="ofr-chips">'+
+          '<span class="tg '+(stIdx(o.status)>=2?'ok':(stIdx(o.status)<1?'bad':''))+'">'+stNome(o.status)+'</span>'+
+          '<span class="tg '+(claus||lib>0.6?'ok':(lib<0.3?'bad':''))+'">'+(claus?'cláusula paga':'liberação '+pc(lib))+'</span>'+
+          (p.exig?'<span class="tg bad">'+esc(p.exig.txt)+'</span>':'')+'</div>'+
+        (aval&&aval.pid===p.id?
+          '<div style="border-top:1px solid var(--line);padding-top:9px;margin-bottom:9px">'+
+          '<p class="hint" style="margin:0 0 8px"><b class="neg">'+esc(p.nome)+' não quer:</b> '+esc(aval.motivos.join(', '))+'</p>'+
+          '<div class="row2"><button class="btn" data-forca="'+p.id+':'+aval.idx+'">Forçar</button>'+
+          '<button class="btn sec" data-desiste="1">Desistir</button></div></div>':
+          '<div class="ofr-act"><button class="btn" data-tr="'+p.id+':'+i+'">Fechar</button>'+
+          '<button class="lnk" data-recall="'+p.id+'">Recusar</button>'+
+          (qtd>1?'<button class="lnk" data-pn="'+p.id+'">ver '+qtd+'</button>':'')+'</div>')+
+        '</div>';
+    });
+    if(comProp.length>2)h+='<div class="card-b" style="border-top:1px solid var(--line)"><button class="btn sec" data-recgeral="1">Recusar todas as propostas da janela</button></div>';
+    h+='</div>';
+  }
   var itens=[];
   S.clientes.forEach(function(p){
     if(p.assedio)itens.push({p:p,t:'assédio',x:'a '+p.assedio.ag+' está em cima dele',k:'neg'});
-    else if(S.props[p.id])itens.push({p:p,t:'proposta',x:S.props[p.id].length+' proposta'+(S.props[p.id].length>1?'s':'')+' na mesa',k:'good'});
     else if(p.exig)itens.push({p:p,t:'exigência',x:p.exig.txt,k:'bad'});
+    else if((S.props[p.id]||[]).length)return;
     else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'contrato vencido no '+clube(p.clube).n,k:'bad'});
     else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano de contrato',k:''});
   });
   h+='<div class="card"><div class="card-h"><h2>Sua mesa</h2><span>'+itens.length+' assunto'+(itens.length!==1?'s':'')+'</span></div>';
-  if(!itens.length)h+='<div class="card-b hint">Nada pendente. Dá para procurar nomes novos ou rodar a temporada.</div>';
+  if(!itens.length)h+='<div class="card-b hint">'+(comProp.length?'Fora as propostas acima, nada pendente.':'Nada pendente. Dá para procurar nomes novos ou rodar a temporada.')+'</div>';
   itens.forEach(function(it){
     var c=clube(it.p.clube);
     h+='<div class="item" style="cursor:default">'+
@@ -1054,6 +1087,11 @@ function vCli(){
 }
 
 /* ---------- nomes ---------- */
+function melhorOf(p){
+  var l=S.props[p.id]||[],bi=0,bc=-1;
+  l.forEach(function(o,i){var c=o.preco*taxaTr()+o.luvas*0.4;if(c>bc){bc=c;bi=i;}});
+  return {of:l[bi],i:bi,com:Math.max(0,bc)};
+}
 var ORDENS=[['valor','Mais valiosos'],['idade','Mais novos'],['teto','Maior teto'],['contrato','Contrato acabando']];
 function ordenar(l){
   return l.sort(function(a,b){
@@ -1531,7 +1569,7 @@ function carregar(){
 
 /* =================== eventos =================== */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
+  var t=ev.target.closest('[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
   if(!t)return;
   if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
   var d=t.dataset;
@@ -1548,6 +1586,30 @@ document.addEventListener('click',function(ev){
   if(d.sond){var ps=porId(+d.sond);if(ps){var r=sondar(ps);toast(r.m);}render();return;}
   if(d.sign){var pa=porId(+d.sign);if(pa){var r2=assinar(pa);toast(r2.m);if(r2.ok)fecharSheet();}render();return;}
   if(d.ord){ordem=d.ord;render();return;}
+  if(d.recall){
+    var pr9=porId(+d.recall);
+    if(pr9&&S.props[pr9.id]){
+      var n9=S.props[pr9.id].length;
+      var boa=S.props[pr9.id].some(function(o){return o.sal>pr9.ct.sal*1.15||stIdx(o.status)>stIdx(pr9.status);});
+      if(boa)mexeConf(pr9,-5,'você recusou proposta que ele queria');
+      delete S.props[pr9.id];
+      S.noticias.push({t:'Você recusou '+n9+' proposta(s) por <b>'+esc(pr9.nome)+'</b>.',k:''});
+      toast('Recusadas.');
+    }
+    render();return;
+  }
+  if(d.recgeral){
+    var n8=0;
+    S.clientes.forEach(function(p){
+      if(!S.props[p.id])return;
+      n8+=S.props[p.id].length;
+      if(S.props[p.id].some(function(o){return o.sal>p.ct.sal*1.15||stIdx(o.status)>stIdx(p.status);}))mexeConf(p,-5,'você recusou proposta que ele queria');
+      delete S.props[p.id];
+    });
+    S.noticias.push({t:'Você recusou '+n8+' proposta(s) na janela.',k:''});
+    toast(n8+' proposta(s) recusadas.');
+    render();return;
+  }
   if(d.pn){aberto=+d.pn;fichaAba='neg';neg=null;aval=null;renderSheet();return;}
   if(d.pren){
     var pj0=porId(+d.pren);
@@ -1561,7 +1623,8 @@ document.addEventListener('click',function(ev){
       mexeConf(pj,-12,'você forçou a ida para o '+clube(ofv.c).n+' contra a vontade dele');
       var cf=fecharTransfer(pj,ofv,aval&&aval.futuro);
       delete S.props[pj.id];aval=null;
-      toast('Fechado no grito. Comissão de '+din(cf)+'.');fecharSheet();
+      toast('Fechado no grito. Comissão de '+din(cf)+'.');
+      if(aberto!==null)fecharSheet();
     }
     render();return;
   }
@@ -1577,7 +1640,8 @@ document.addEventListener('click',function(ev){
           render();return;
         }
         var com=fecharTransfer(pt,of,futuro);delete S.props[pt.id];aval=null;
-        toast('Negócio fechado. Comissão de '+din(com)+'.');fecharSheet();
+        toast('Negócio fechado. Comissão de '+din(com)+'.');
+        if(aberto!==null)fecharSheet();
       }else{
         S.props[pt.id]=S.props[pt.id].filter(function(x,i){return i!==+pp[1];});
         mexeConf(pt,-4,'o clube barrou a saída dele');
