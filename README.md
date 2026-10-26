@@ -7,6 +7,18 @@ Simulador de carreira de empresário de jogadores · **BNF GAMES**
 | Arquivo | `index.html`, arquivo único, sem build e sem dependência externa |
 | Save | `localStorage`, chave `agente:v3` (de ~7 a 40 KB conforme a carreira) |
 | Mundo | 304 clubes em 18 ligas, base copiada do `fundo-de-clubes.html` |
+| App | instalável (PWA) e funciona offline: `manifest.webmanifest`, `sw.js`, `icons/` |
+| Site | GitHub Pages, publicado a cada push na `main` (`.github/workflows/pages.yml`) |
+
+### Instalar no celular
+
+Abra `https://goncalvesj081-bit.github.io/agent/`.
+
+- **Android (Chrome):** toque em **Instalar o app** na tela inicial do jogo, ou use o menu ⋮ → *Instalar app*.
+- **iPhone (Safari):** **Compartilhar** → **Adicionar à Tela de Início**.
+
+O save continua no aparelho (`localStorage`). Quando um arquivo novo entrar na lista do
+cache, suba a versão `CACHE` em `sw.js`.
 
 ## Índice
 

@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0A0E13">
 <meta name="description" content="Agente - simulador de carreira de empresario de jogadores.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agente">
 <title>Agente</title>
 <style>
 :root{
@@ -169,6 +176,8 @@ h1{font-size:23px;margin:0 0 6px;font-weight:650;letter-spacing:-.3px}
   </div>
   <button class="btn" id="btn-novo" style="margin-top:10px">Abrir o escritório</button>
   <button class="btn sec" id="btn-cont" hidden>Continuar carreira salva</button>
+  <button class="btn sec" id="btn-inst" hidden>Instalar o app</button>
+  <p class="hint" id="inst-ios" hidden style="margin-top:10px">Para instalar no iPhone: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.</p>
   <p class="hint" style="margin-top:14px" id="intro-rec"></p>
 </div></div>
 
@@ -1842,6 +1851,19 @@ if(sv&&sv.temp){
 }
 try{var rec=parseFloat(localStorage.getItem('agente:rec')||'0');
   if(rec)$('#intro-rec').textContent='Seu recorde de faturamento: '+din(rec)+'.';}catch(e){}
+
+// App instalável: cache offline e botão de instalar
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+}
+var instalado=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,pedido=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();pedido=e;$('#btn-inst').hidden=false;});
+window.addEventListener('appinstalled',function(){pedido=null;$('#btn-inst').hidden=true;});
+$('#btn-inst').addEventListener('click',function(){
+  if(!pedido)return;pedido.prompt();
+  pedido.userChoice.then(function(){pedido=null;$('#btn-inst').hidden=true;});
+});
+if(!instalado&&/iphone|ipad|ipod/i.test(navigator.userAgent))$('#inst-ios').hidden=false;
 })();
 </script>
 </body>
