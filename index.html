@@ -692,6 +692,7 @@ function segurarCliente(p){
 }
 function rescindir(p){
   S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
+  delete S.props[p.id];if(S.emps)delete S.emps[p.id];
   p.agencia=pick(AGENCIAS);
   S.exCli.push(p);
   S.rep=cl(S.rep-0.4,0,100);
@@ -875,7 +876,7 @@ function equipeTrabalha(){
       if(ok){var com=fecharRenov(p,pr);log.push({t:'Renovou <b>'+esc(p.nome)+'</b> até '+(S.temp+pr.anos)+'. Comissão de '+din(com)+'.',k:'good'});}
       else log.push({t:'Não fechou a renovação de <b>'+esc(p.nome)+'</b>'+(p.ct.ate<=S.temp?': contrato vencido':'')+'.',k:p.ct.ate<=S.temp?'bad':''});
     }
-    if(p.exig&&p.exig.t==='jogar'&&!p.emprest){
+    if(p.exig&&p.exig.t==='jogar'&&!p.emprest&&!S.props[p.id]){
       var em=gerarEmprestimos(p).filter(function(o){return stIdx(o.status)>=2;});
       if(em.length){fecharEmprestimo(p,em[0]);log.push({t:'Emprestou <b>'+esc(p.nome)+'</b> ao '+clube(p.clube).n+' para ele jogar.',k:'good'});}
     }
@@ -1267,6 +1268,8 @@ function aplicarEvento(e,i,auto){
   if(!ev)return '';
   var p=e.pid!==null?porId(e.pid):null;
   if(!ev.geral&&(!p||p.agencia!=='VOCÊ'))return '';
+  /* a situacao pode ter mudado desde que a carta chegou (ex.: ele foi emprestado) */
+  if(!ev.geral&&!ev.ok(p)){S.noticias.push({t:e.txt.replace(/<\/?b>/g,'')+' A situação mudou e a proposta caiu.',k:''});return 'A situação mudou: não vale mais.';}
   var ops=ev.ops(p),o=ops[Math.min(i,ops.length-1)],r=o.f()||(o.t+'.');
   S.noticias.push({t:(auto?'Sem resposta sua: ':'')+e.txt.replace(/<\/?b>/g,'')+' Escolha: '+o.t+'.',k:''});
   return r;
