@@ -485,6 +485,8 @@ function alcance(){return escr().alc+niv('olh')*10;}
 var AGENCIAS=['Prado & Associados','Gol Sports','Vieira Talentos','MRC Management','Estrela Agência','Fair Play Brasil'];
 /* faturamento anual inicial de cada rival (R$ mi); crescem ~20% por temporada */
 var RIVAL_ANO=[0.05,0.09,0.15,0.24,0.38,0.6];
+/* quanto do seu faturamento cada rival persegue */
+var RIVAL_FORCA=[0.5,0.65,0.8,0.95,1.12,1.3];
 function rivalDe(n){for(var i=0;i<S.rivais.length;i++)if(S.rivais[i].n===n)return S.rivais[i];return null;}
 var NOMES=['Kaiquinho','Vitinho','Deivid','Ruan','Peterson','Jhonatan','Wesley','Cauã','Yuri','Nilsinho','Everaldo','Maicon','Léo Fumaça','Tiaguinho','Robson','Danilinho','Cleiton','Vanderson','Igor','Marcelinho','Adriel','Juan Pablo','Zé Rafael','Bruninho','Weverton','Gilmar','Alison','Paulinho','Rodriguinho','Kauê','Ítalo','Erick','Denilson','Matheusinho','Jefinho','Gabriel Melo','Luan','Otávio','Serginho','Hélio','Nicolas','Vinicinho','Emerson','Carlinhos','Rafinha','Joãozinho','Douglas','Wanderson','Ederson','Micael'];
 
@@ -996,7 +998,7 @@ function campanha(){
 }
 function rodarTemporada(){
   S.evs=[];
-  var posAnt=posicao(),caixaAnt=S.caixa;
+  var posAnt=posicao(),caixaAnt=S.caixa,lider=posAnt===1;
   var det=[],rel=[];
   todos().forEach(function(p){
     var c=clube(p.clube),ref=refDiv(divDe(p.clube)),antes=p.nv;
@@ -1091,7 +1093,7 @@ function rodarTemporada(){
   /* assedio das agencias rivais */
   S.clientes.forEach(function(p){
     if(p.assedio||S.temp<3)return;
-    var ch=cl((58-p.conf)/140,0,0.28)+cl(valor(p)/90,0,0.15);
+    var ch=(cl((58-p.conf)/140,0,0.28)+cl(valor(p)/90,0,0.15))*(lider?1.5:1);
     if(Math.random()<ch){
       p.assedio={ag:pick(AGENCIAS),t:S.temp};
       S.evs.push({t:'A <b>'+p.assedio.ag+'</b> procurou '+esc(p.nome)+' pelas costas.',k:'bad'});
@@ -1103,7 +1105,7 @@ function rodarTemporada(){
     var risco=cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04;
     if(Math.random()<risco){
       var ag=p.assedio?p.assedio.ag:pick(AGENCIAS);p.agencia=ag;
-      var rv=rivalDe(ag);if(rv)rv.ano+=(p.ct.sal*0.07+imagemDe(p)*0.2);
+      var rv=rivalDe(ag);if(rv){var ganho=p.ct.sal*0.07+imagemDe(p)*0.2;rv.ano+=ganho;if(rv.base!==undefined)rv.base+=ganho;}
       S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
       S.exCli.push(p);perdidos.push(p);
       S.evs.push({t:'<b>'+esc(p.nome)+'</b> cansou de esperar e assinou com a '+ag+'.',k:'bad'});
@@ -1113,10 +1115,10 @@ function rodarTemporada(){
   /* rivais levam os garotos que estavam de olho e voce nao assinou */
   S.pool.forEach(function(p){
     if(!p.rival||p.agencia)return;
-    if(Math.random()<0.6){
+    if(Math.random()<(lider?0.75:0.6)){
       p.agencia=p.rival;
       S.evs.push({t:'A <b>'+p.rival+'</b> assinou '+esc(p.nome)+(p.conh>0.3?', que você estava sondando':'')+'.',k:'bad'});
-      var rv2=rivalDe(p.rival);if(rv2)rv2.ano+=0.01+valor(p)*0.002;
+      var rv2=rivalDe(p.rival);if(rv2){var g2=0.01+valor(p)*0.002;rv2.ano+=g2;if(rv2.base!==undefined)rv2.base+=g2;}
     }
     p.rival=null;
   });
@@ -1130,7 +1132,7 @@ function rodarTemporada(){
   var alvo=escr().nomes+niv('olh')*2;
   while(S.pool.length<alvo)S.pool.push(gerarJogador());
   S.pool.forEach(function(p){
-    if(!p.agencia&&p.pot>=58&&Math.random()<0.3)p.rival=pick(AGENCIAS);
+    if(!p.agencia&&p.pot>=58&&Math.random()<(lider?0.45:0.3))p.rival=pick(AGENCIAS);
   });
   /* propostas pelos seus clientes */
   S.props={};
@@ -1141,8 +1143,16 @@ function rodarTemporada(){
   });
   S.janela=resolverJanela();
   /* rivais */
-  S.rivais.forEach(function(r){
-    r.ano=r.ano*cl(r.g+gs()*0.05,1.08,1.36)*S.ciclo.v/(S.ciclo.ant||1);
+  /* rivais reagem: alem do crescimento proprio, perseguem o seu faturamento recente,
+     cada uma conforme a sua forca. Quem dispara na frente puxa as rivais junto. */
+  var media=S.recTemp;
+  S.rivais.forEach(function(r,k){
+    /* dois caminhos: o crescimento proprio (base) e a perseguicao a voce (track);
+       a rival fatura o maior dos dois, sem um inflar o outro */
+    if(r.base===undefined){r.base=r.ano;r.track=0;}
+    r.base=r.base*cl(r.g+gs()*0.05,1.08,1.36)*S.ciclo.v/(S.ciclo.ant||1);
+    r.track+=(media*(r.forca||RIVAL_FORCA[k%RIVAL_FORCA.length])*(lider?1.2:1)-r.track)*0.6;
+    r.ano=Math.max(r.base,r.track);
     r.fat+=r.ano;
   });
   S.ciclo.ant=S.ciclo.v;
@@ -1321,7 +1331,7 @@ function novoJogo(nome){
      props:{},rivais:[],sondUsadas:0,fim:null,rel:null,marcos:{},rec:{},custoAcum:0,planoPad:'ouvir',
      ciclo:{v:1.0,mom:0,f:'normal'},tut:{},eventos:[],metas:[],tc:{}};
   calcularRefs();
-  AGENCIAS.forEach(function(n,i){var a=RIVAL_ANO[i];S.rivais.push({n:n,ano:a,g:rnd(1.205,1.255),fat:a*3});});
+  AGENCIAS.forEach(function(n,i){var a=RIVAL_ANO[i];S.rivais.push({n:n,ano:a,g:rnd(1.205,1.255),fat:a*3,forca:RIVAL_FORCA[i]});});
   for(var i=0;i<escr().nomes;i++)S.pool.push(gerarJogador());
   var cand=S.pool.filter(function(p){return !p.agencia;});
   var p0=cand.length?pick(cand):S.pool[0];
@@ -1461,6 +1471,7 @@ function vCorrida(){
   return '<div class="card"><div class="card-b"><div class="corrida">'+
     '<div class="pos-n">'+pos+'º<small>/'+l.length+'</small></div>'+
     '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+(pos===1?'A maior agência do mercado':'Corrida das agências')+'</div>'+
+    (pos===1?'<div class="hint wrn">Na liderança, as rivais investem para te alcançar, assediam mais os seus clientes e brigam mais pelos garotos.</div>':'')+
     '<div class="hint">'+(acima?'Faltam <b style="color:var(--tx)">'+din(acima.f-S.receita)+'</b> para passar a '+esc(acima.n)+'.':
       (abaixo?'Vantagem de <b class="pos">'+din(S.receita-abaixo.f)+'</b> sobre a '+esc(abaixo.n)+'.':''))+'</div></div>'+
     '<button class="lnk" data-irrank="1">ranking</button></div></div></div>';
@@ -2210,7 +2221,8 @@ function carregar(){
     if(!o.clientes||!o.pool||!o.ciclo)return null;
     limparConfLog(o);
     (o.rivais||[]).forEach(function(r,i){
-      if(r.ano===undefined){r.ano=RIVAL_ANO[i%RIVAL_ANO.length]*Math.pow(1.21,o.temp-1);r.g=1.21;delete r.forca;}
+      if(r.ano===undefined){r.ano=RIVAL_ANO[i%RIVAL_ANO.length]*Math.pow(1.21,o.temp-1);r.g=1.21;}
+      if(typeof r.forca!=='number'||r.forca>2)r.forca=RIVAL_FORCA[i%RIVAL_FORCA.length];
     });
     return o;
   }catch(e){return null;}

@@ -149,9 +149,18 @@ Oito marcos de carreira, cada um valendo reputação:
 
 - **Seis agências rivais** disputam o ranking de faturamento acumulado. Você começa em último;
   virar a maior agência é o objetivo de longo prazo.
-- Cada rival cresce cerca de 20% a 25% por temporada e acompanha o ciclo de mercado.
+- **As rivais reagem a você.** Cada uma tem dois caminhos e fatura o maior deles:
+  - crescimento próprio, de 20% a 25% por temporada, que acompanha o ciclo de mercado;
+  - perseguição: mira uma fração do seu faturamento na temporada (de 50% a 130%, conforme a
+    força da rival) e fecha 60% da distância por temporada. Se você para de crescer, elas
+    encostam.
+- **A líder vira alvo.** Enquanto você está em 1º, as rivais perseguem 20% a mais, assediam seus
+  clientes 50% mais e brigam mais pelos garotos (marcam mais e levam 75% em vez de 60%).
 - Elas ficam mais fortes quando levam um cliente seu (por assédio) ou um garoto que você deixou
   passar.
+- Medido com bots em 30 carreiras: quem joga como o bot básico termina em 4º; quem fatura 40%
+  a mais chega colado na líder; para liderar com folga é preciso faturar uns 80% a mais, e mesmo
+  assim a vantagem na temporada 15 fica perto de 20%.
 - A Mesa mostra sua posição e quanto falta para passar a próxima. A Análise mostra a corrida
   em gráfico.
 
@@ -429,7 +438,9 @@ fama         += (ref da liga + (nota − 6,1)·20 + palco − fama) · peso(minu
 renda         = comissão anual sobre salários + sua parte da imagem
 valorAgência  = caixa + 6 · renda + 0,08 · carteira + 0,05 · reputação
 meta          = paga 18% a 30% da renda (arredondado) e 1–2 de reputação; bônus de 25% da renda pelas três
-rival         = faturamento anual · (1,205 a 1,255 + ruído) · variação do ciclo, por temporada
+rivalBase     = base · (1,205 a 1,255 + ruído) · variação do ciclo, por temporada
+rivalTrack   += (seuFaturamentoDaTemporada · força · (1,2 se você lidera) − rivalTrack) · 0,6
+rivalAno      = max(rivalBase, rivalTrack)          força = 0,5 · 0,65 · 0,8 · 0,95 · 1,12 · 1,3
 qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação da equipe)
 ```
 
@@ -479,6 +490,7 @@ Itens pesquisados e ainda não implementados.
 | Molde Fundo de Clubes | conta aberta na tela, ativo com perfil de indicadores, alavancas que levam temporadas, temporada que fecha em relatório, rivais agindo sozinhos, ciclo de mercado, benchmark e ranking | base da versão atual |
 | Gestão por diretriz | a janela passou a ser resolvida por diretrizes | oito clientes com proposta mostraram que aprovar caso a caso é burocracia, não jogo |
 | Rivais que crescem | rivais com crescimento composto, ligadas ao ciclo, que se fortalecem com o que tiram de você | um bot simples terminava em 1º quase sempre; o ranking não era disputa |
+| Rivais que reagem | rivais perseguem o seu faturamento e pressionam mais quem lidera | jogando bem, abria R$ 50 mi sobre a 2ª agência em 15 temporadas: fácil demais |
 | Limites por janela | conversar, segurar e renovar passaram a ter limite por janela | dava para repetir o clique até dar certo |
 | Equipe e craques | a partir da sala alugada a equipe cuida da rotina; você só dos craques | com muitos clientes, tomar todas as decisões ficava chato e o jogador parava de jogar |
 | Metas e acontecimentos | três metas curtas e até duas cartas de escolha por janela | cada temporada precisava de um motivo próprio e de variedade |
@@ -500,4 +512,5 @@ Datas de 2026.
 | 27/10 | Metas e acontecimentos | metas da temporada; acontecimentos; disputa pelos garotos; venda da agência; temporada com suspense; gráficos; rosto de humor |
 | 27/10 | Correções | empréstimo cancela propostas e não renova com o clube do empréstimo (em todas as telas); botão de transferência com o destino certo; pendência fantasma; aviso apontando a proposta errada; erro ao tocar proposta que sumiu |
 | 27/10 | Auditoria | acontecimento que perde a validade; equipe não empresta quem tem proposta grande; encerrar relação limpa as propostas |
+| 27/10 | Dificuldade | rivais perseguem o seu faturamento; a líder vira alvo (mais assédio, mais disputa por garotos, rivais investindo) |
 | 27/10 | Correção | faixa de nível e teto: em ~1 de cada 5 jogadores ela não continha o valor real e "pulava" a cada sondagem; agora sempre contém e só aperta |
