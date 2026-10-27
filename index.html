@@ -764,13 +764,18 @@ function rescindir(p){
 /* ---------- negociacao com o clube atual ---------- */
 var CLAUS=[null,4,2.5,1.5];
 function chanceRenov(p,prop){
-  var c=clube(p.clube),justo=salarioJusto(p),folga=justo/Math.max(0.01,prop.sal);
+  var c=clube(p.clube),justo=salarioJusto(p),r=Math.max(0.01,prop.sal)/justo,folga=cl(1/r,0,1.3);
   var stGap=stIdx(prop.status)-stIdx(statusMerecido(p));
   var b=0.62*folga-stGap*0.22+niv('jur')*0.06+cl((p.nv-c.nv+8)/45,-0.3,0.35)-(prop.anos>=4?0.08:0)+S.rep/300;
+  /* pedir muito acima do mercado derruba a chance, nao importa a reputacao */
+  b-=cl((r-1.1)*1.2,0,2);
   if(p.ct.ate>S.temp+1)b-=0.15;
   if(prop.claus)b-=cl(0.42*(1-(prop.claus-1.4)/2.8),0,0.4)-niv('jur')*0.04;
   return cl(b,0.03,0.96);
 }
+/* limites do salario na mesa de renovacao, em relacao ao mercado */
+var SAL_MIN=0.5,SAL_MAX=2.5;
+function limitaSal(p,pr){var j=salarioJusto(p);pr.sal=cl(pr.sal,j*SAL_MIN,j*SAL_MAX);pr.luvas=pr.sal*0.5;}
 function statusMerecido(p){
   var c=clube(p.clube),g=p.nv-c.nv;
   return g>=4?'titular':(g>=-4?'rodando':(g>=-13?'reserva':'fora'));
@@ -2425,7 +2430,7 @@ function fNeg(p,meu,c,f,fp){
     h+='<div class="card"><div class="card-h"><h2>Mesa com o '+esc(c.n)+'</h2><span>'+(3-tent)+' tentativa'+(3-tent!==1?'s':'')+'</span></div><div class="card-b">'+
       '<div class="i-sub" style="margin:0"><span>Chance de o clube aceitar</span><b style="color:'+corCh+';font-size:15px">'+pc(ch)+'</b></div>'+
       '<div class="chance"><div style="width:'+Math.round(ch*100)+'%;background:'+corCh+'"></div></div>'+
-      linha('sal','Salário por ano',din(pr.sal),'<span class="'+(rel>1.15?'neg':(rel<0.95?'mut':'pos'))+'">'+(rel>=1?'+':'−')+Math.round(Math.abs(rel-1)*100)+'% do mercado</span>',pr.sal<=0.03,false)+
+      linha('sal','Salário por ano',din(pr.sal),'<span class="'+(rel>1.15?'neg':(rel<0.95?'mut':'pos'))+'">'+(rel>=1?'+':'−')+Math.round(Math.abs(rel-1)*100)+'% do mercado</span>',rel<=SAL_MIN+0.001,rel>=SAL_MAX-0.001)+
       linha('st','Status no elenco',stNome(pr.status),stIdx(pr.status)>stIdx(statusMerecido(p))?'<span class="neg">acima do que o clube acha justo</span>':'',stIdx(pr.status)<=0,stIdx(pr.status)>=3)+
       linha('an','Duração',pr.anos+' temporada'+(pr.anos>1?'s':''),'',pr.anos<=1,pr.anos>=5)+
       linha('cl','Cláusula de rescisão',pr.claus?din(valorClausula(p,CLAUS[pr.claus])):'sem cláusula',pr.claus?'<span class="mut">'+CLAUS[pr.claus]+'× o valor</span>':'',!pr.claus,pr.claus>=3)+
@@ -2848,7 +2853,7 @@ document.addEventListener('click',function(ev){
   if(d.neg){
     if(d.neg==='fechar'){neg=null;render();return;}
     var pn2=porId(neg.id),pr=neg.prop,pp2=d.neg.split(':'),sinal=pp2[1]==='+'?1:-1;
-    if(pp2[0]==='sal'){pr.sal=Math.max(0.02,pr.sal*(sinal>0?1.15:0.88));pr.luvas=pr.sal*0.5;}
+    if(pp2[0]==='sal'){pr.sal=pr.sal*(sinal>0?1.15:0.88);limitaSal(pn2,pr);}
     if(pp2[0]==='st'){var i2=cl(stIdx(pr.status)+sinal,0,3);pr.status=STATUS[i2][0];}
     if(pp2[0]==='an'){pr.anos=cl(pr.anos+sinal,1,5);}
     if(pp2[0]==='cl'){pr.claus=cl((pr.claus||0)+sinal,0,3);}
@@ -2856,6 +2861,7 @@ document.addEventListener('click',function(ev){
   }
   if(d.prop){
     var pf=porId(+d.prop),prop=neg.prop;
+    if(pf)limitaSal(pf,prop);
     if(!S.renovTent)S.renovTent={};
     if((S.renovTent[pf.id]||0)>=3){toast('O '+clube(pf.clube).n+' encerrou a conversa. Só na próxima janela.');render();return;}
     S.renovTent[pf.id]=(S.renovTent[pf.id]||0)+1;
@@ -2864,7 +2870,7 @@ document.addEventListener('click',function(ev){
       toast('Renovado. Comissão de '+din(c2)+'.');
     }else{
       mexeConf(pf,-2,'renovação travada no '+clube(pf.clube).n);
-      neg.prop.sal*=0.94;
+      neg.prop.sal*=0.94;limitaSal(pf,neg.prop);
       toast(S.renovTent[pf.id]>=3?'O '+clube(pf.clube).n+' recusou e encerrou a conversa nesta janela.':'O '+clube(pf.clube).n+' recusou. Eles voltaram com menos.');
       S.noticias.push({t:'O '+clube(pf.clube).n+' recusou sua proposta por <b>'+esc(pf.nome)+'</b>.',k:''});
     }

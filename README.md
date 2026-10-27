@@ -259,7 +259,7 @@ encerra a conversa até a próxima.
 
 | Eixo | Opções |
 |---|---|
-| Salário | livre (mostra a diferença para o mercado) |
+| Salário | de 50% a 250% do mercado (mostra a diferença); pedir acima de 10% do mercado derruba a chance rápido |
 | Status no elenco | fora dos planos → reserva → rodando o elenco → titular absoluto |
 | Duração | 1 a 5 temporadas |
 | Cláusula de rescisão | sem / 4× / 2,5× / 1,5× o valor |
@@ -601,3 +601,4 @@ Datas de 2026.
 | 27/10 | Copa, pré-contrato e mais | Copa do Mundo; pré-contrato (Bosman) e fim de contrato com consequência; academia; direitos econômicos; dificuldade; rivais com manchetes; backup da carreira |
 | 27/10 | Visual | confirmações e campos de texto em janela própria do jogo, no lugar das caixas do navegador |
 | 27/10 | Saídas | risco de perder clientes na Mesa; quem saiu aparece na revelação, no topo do relatório e da Mesa |
+| 27/10 | Correção | salário na renovação sem limite (chegava a valores absurdos) e chance de aceite que quase não caía com pedido alto |
