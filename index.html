@@ -773,6 +773,7 @@ function fecharTransfer(p,of,futuro){
   }
   if(futuro){com*=0.45;p.sellon=(p.sellon||0)+0.15;}
   p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;p.emprest=null;
+  if(S.emps)delete S.emps[p.id];
   mexeConf(p,stIdx(of.status)>=2?11:-6,stIdx(of.status)>=2?'saiu para jogar no '+clube(of.c).n:'foi para o banco do '+clube(of.c).n);
   if(of.sal>p.ct.sal*1.2)mexeConf(p,4,'ganhou bem mais de salário');
   p.fama=cl(p.fama+cl((LIGAS[divDe(of.c)].rep-25)*0.08,0,5),18,99);
@@ -802,6 +803,7 @@ function gerarEmprestimos(p){
 function fecharEmprestimo(p,of){
   var com=of.sal*taxaCom()*0.6;
   p.emprest={de:p.clube,volta:S.temp};
+  delete S.props[p.id];if(S.emps)delete S.emps[p.id];
   p.clube=of.c;p.status=of.status;
   mexeConf(p,stIdx(of.status)>=2?9:2,'foi emprestado ao '+clube(of.c).n+' para jogar');
   receber(com,'emprest',p);
@@ -1377,11 +1379,12 @@ function grafico(series,o){
 }
 function faixaTxt(p){var f=faixa(p);return f.exato?String(Math.round(p.nv)):f.lo+'–'+f.hi;}
 function pendencias(){
+  /* emprestado nao gera pendencia de contrato: renova na volta */
   var n=0,cq=craques().map(function(p){return p.id;});
   S.clientes.forEach(function(p){
-    if(S.props[p.id])n++;
+    if((S.props[p.id]||[]).length)n++;
     else if(cq.indexOf(p.id)<0)return;
-    else if(p.ct.ate<=S.temp+1)n++;
+    else if(p.ct.ate<=S.temp+1&&!p.emprest)n++;
     else if(p.exig)n++;
   });
   return n;
@@ -1539,6 +1542,7 @@ function vMesa(){
     if(p.assedio)itens.push({p:p,t:'assédio',x:'a '+p.assedio.ag+' está em cima dele',k:'neg'});
     else if(p.exig)itens.push({p:p,t:'exigência',x:p.exig.txt,k:'bad'});
     else if((S.props[p.id]||[]).length)return;
+    else if(p.emprest)return;
     else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'contrato vencido no '+clube(p.clube).n,k:'bad'});
     else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano de contrato',k:''});
   });
@@ -1903,7 +1907,7 @@ function fRes(p,meu,c,f,fp){
     if(p.assedio)avisos.push(['a '+p.assedio.ag+' está em cima dele','neg']);
     if(p.exig)avisos.push([p.exig.txt,'neg']);
     if((S.props[p.id]||[]).length)avisos.push([S.props[p.id].length+' proposta(s) esperando resposta','pos']);
-    if(p.ct.ate<=S.temp+1)avisos.push([p.ct.ate<=S.temp?'contrato vencido':'último ano de contrato','wrn']);
+    if(p.ct.ate<=S.temp+1&&!p.emprest)avisos.push([p.ct.ate<=S.temp?'contrato vencido':'último ano de contrato','wrn']);
     if(avisos.length){
       h+='<div class="card"><div class="card-h"><h2>Precisa de você</h2></div><div class="card-b">'+
         avisos.map(function(a){return '<div class="nw"><b class="'+a[1]+'">'+esc(a[0])+'</b></div>';}).join('')+
@@ -2007,7 +2011,7 @@ function fNeg(p,meu,c,f,fp){
         '<div class="ofr-chips">'+
           '<span class="tg '+(stIdx(o.status)>=2?'ok':(stIdx(o.status)<1?'bad':''))+'">'+stNome(o.status)+'</span>'+
           '<span class="tg '+(claus||lib>0.6?'ok':(lib<0.3?'bad':''))+'">'+(claus?'cláusula paga':'liberação '+pc(lib))+'</span></div>'+
-        '<div class="ofr-act"><button class="btn" data-tr="'+p.id+':'+i+'">Levar ao '+esc(c.n)+'</button>'+
+        '<div class="ofr-act"><button class="btn" data-tr="'+p.id+':'+i+'">Levar ao '+esc(cc.n)+'</button>'+
         '<button class="lnk" data-rec="'+p.id+':'+i+'">Recusar</button></div>'+
         (aval&&aval.pid===p.id&&aval.idx===i?
           '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
@@ -2035,7 +2039,11 @@ function fNeg(p,meu,c,f,fp){
   }else if(!p.emprest){
     h+='<button class="btn sec" data-buscaremp="'+p.id+'" style="margin-bottom:11px">Buscar empréstimo para ele jogar</button>';
   }
-  if(!neg||neg.id!==p.id){
+  if(p.emprest){
+    h+='<div class="card"><div class="card-h"><h2>Emprestado</h2><span>'+esc(c.n)+'</span></div><div class="card-b hint">'+
+      'Joga pelo <b style="color:var(--tx)">'+esc(c.n)+'</b> nesta temporada e volta ao <b style="color:var(--tx)">'+esc(clube(p.emprest.de).n)+'</b> na virada. '+
+      'Enquanto isso não recebe propostas de compra; o contrato se renova com o '+esc(clube(p.emprest.de).n)+' quando ele voltar.</div></div>';
+  }else if(!neg||neg.id!==p.id){
     h+='<button class="btn sec" data-abrirneg="'+p.id+'" style="margin-bottom:11px">Negociar contrato com o '+esc(c.n)+'</button>';
   }else{
     var pr=neg.prop,ch=chanceRenov(p,pr),com2=pr.luvas*0.35+pr.sal*taxaCom(),
@@ -2264,12 +2272,12 @@ document.addEventListener('click',function(ev){
   if(d.pn){aberto=+d.pn;fichaAba='neg';neg=null;aval=null;renderSheet();return;}
   if(d.pren){
     var pj0=porId(+d.pren);
-    if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg={id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
+    if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg=pj0.emprest?null:{id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
     return;
   }
   if(d.desiste){aval=null;render();return;}
   if(d.forca){
-    var pv=d.forca.split(':'),pj=porId(+pv[0]),ofv=S.props[+pv[0]][+pv[1]];
+    var pv=d.forca.split(':'),pj=porId(+pv[0]),ofv=(S.props[+pv[0]]||[])[+pv[1]];
     if(pj&&ofv){
       mexeConf(pj,-12,'você forçou a ida para o '+clube(ofv.c).n+' contra a vontade dele');
       var cf=fecharTransfer(pj,ofv,aval&&aval.futuro);
@@ -2281,7 +2289,7 @@ document.addEventListener('click',function(ev){
   }
   if(d.trf||d.tr){
     var chave=d.trf||d.tr,futuro=!!d.trf;
-    var pp=chave.split(':'),pt=porId(+pp[0]),of=S.props[+pp[0]][+pp[1]];
+    var pp=chave.split(':'),pt=porId(+pp[0]),of=(S.props[+pp[0]]||[])[+pp[1]];
     if(pt&&of){
       if(Math.random()<aceitaLiberar(pt,of)){
         var op=opiniaoCliente(pt,of);
@@ -2295,6 +2303,8 @@ document.addEventListener('click',function(ev){
         if(aberto!==null)fecharSheet();
       }else{
         S.props[pt.id]=S.props[pt.id].filter(function(x,i){return i!==+pp[1];});
+        if(!S.props[pt.id].length)delete S.props[pt.id];
+        aval=null;
         mexeConf(pt,-4,'o clube barrou a saída dele');
         S.noticias.push({t:'O '+clube(pt.clube).n+' recusou liberar <b>'+esc(pt.nome)+'</b> para o '+clube(of.c).n+'.',k:'bad'});
         toast('O clube barrou a saída.');
@@ -2303,10 +2313,11 @@ document.addEventListener('click',function(ev){
     render();return;
   }
   if(d.rec){
-    var pr3=d.rec.split(':'),pj3=porId(+pr3[0]),of3=S.props[+pr3[0]][+pr3[1]];
+    var pr3=d.rec.split(':'),pj3=porId(+pr3[0]),of3=(S.props[+pr3[0]]||[])[+pr3[1]];
     if(pj3&&of3){
       S.props[pj3.id]=S.props[pj3.id].filter(function(x,i){return i!==+pr3[1];});
       if(!S.props[pj3.id].length)delete S.props[pj3.id];
+      aval=null;
       var bom=of3.sal>pj3.ct.sal*1.15||stIdx(of3.status)>stIdx(pj3.status);
       if(bom)mexeConf(pj3,-5,'você recusou a proposta do '+clube(of3.c).n);
       S.noticias.push({t:'Você recusou a proposta do '+clube(of3.c).n+' por <b>'+esc(pj3.nome)+'</b>.',k:''});
@@ -2336,11 +2347,11 @@ document.addEventListener('click',function(ev){
     render();return;
   }
   if(d.emp){
-    var pv=d.emp.split(':'),pj5=porId(+pv[0]),of5=S.emps[+pv[0]][+pv[1]];
+    var pv=d.emp.split(':'),pj5=porId(+pv[0]),of5=((S.emps||{})[+pv[0]]||[])[+pv[1]];
     if(pj5&&of5){var c5=fecharEmprestimo(pj5,of5);delete S.emps[pj5.id];toast('Emprestado. Comissão de '+din(c5)+'.');}
     render();return;
   }
-  if(d.abrirneg){var pn=porId(+d.abrirneg);if(pn)neg={id:pn.id,prop:propostaBase(pn)};render();return;}
+  if(d.abrirneg){var pn=porId(+d.abrirneg);if(pn&&!pn.emprest)neg={id:pn.id,prop:propostaBase(pn)};render();return;}
   if(d.neg){
     if(d.neg==='fechar'){neg=null;render();return;}
     var pn2=porId(neg.id),pr=neg.prop,pp2=d.neg.split(':'),sinal=pp2[1]==='+'?1:-1;
