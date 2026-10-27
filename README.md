@@ -30,7 +30,7 @@ abre a última que baixou. Se uma atualização não aparecer, feche e abra o ap
 5. [Mercado e negociação](#5-mercado-e-negociação)
 6. [Relação com o cliente](#6-relação-com-o-cliente)
 7. [Vida do jogador](#7-vida-do-jogador)
-8. [Metas e acontecimentos](#8-metas-e-acontecimentos)
+8. [Metas, acontecimentos e Copa do Mundo](#8-metas-acontecimentos-e-copa-do-mundo)
 9. [Fim de carreira](#9-fim-de-carreira)
 10. [Telas](#10-telas)
 11. [Fórmulas](#11-fórmulas)
@@ -60,6 +60,8 @@ temporada roda num botão e devolve números.
 | Pontual | empréstimo |
 | Pontual | metas da temporada |
 | Pontual | patrocínios (acontecimento) |
+| Pontual | pré-contrato (comissão sobre as luvas) |
+| Pontual | direitos econômicos (fatia da venda) |
 
 ---
 
@@ -99,6 +101,16 @@ O nível também define quantos nomes chegam por temporada, quantas sondagens ca
 até que liga vai o seu alcance e as duas taxas de comissão (salário e transferência). Mudar de
 sede é obra: você paga agora e ela fica pronta depois.
 
+### Dificuldade
+
+Escolhida ao abrir o escritório; aparece na sede.
+
+| Dificuldade | Caixa inicial | Rivais |
+|---|---|---|
+| Tranquilo | R$ 300 mil | crescem 3 pontos mais devagar, perseguem 25% menos, pressionam menos a líder |
+| Normal | R$ 180 mil | como descrito nesta página |
+| Difícil | R$ 120 mil | crescem um pouco mais rápido, perseguem 15% mais, pressionam mais a líder |
+
 ### Equipe e craques
 
 A partir da sala alugada a agência tem equipe, e você passa a cuidar pessoalmente só dos
@@ -130,9 +142,21 @@ Três níveis cada.
 | Assessoria de imprensa | a fama dos clientes cresce além do que o campo justifica (e aumenta a imagem) |
 | Suporte ao atleta | a confiança cai mais devagar e o cliente evolui melhor |
 
+### Academia própria
+
+A partir do escritório com equipe, na aba Estrutura. Forma garotos de 15 a 17 anos, com teto alto
+e já bem conhecidos (70% de leitura), que entram na aba Nomes marcados como "da sua academia" e
+são muito mais fáceis de assinar (+35% de chance). Rivais não disputam esses garotos.
+
+| Nível | Obra | Custo por temporada | Garotos por temporada |
+|---|---|---|---|
+| 1 | R$ 8 mi · 2 temp. | R$ 400 mil | 1 |
+| 2 | R$ 25 mi · 2 temp. | R$ 1,2 mi | 2 |
+| 3 | R$ 70 mi · 2 temp. | R$ 3,5 mi | 3 |
+
 ### Marcos
 
-Oito marcos de carreira, cada um valendo reputação:
+Nove marcos de carreira, cada um valendo reputação:
 
 | Marco | Condição |
 |---|---|
@@ -144,6 +168,7 @@ Oito marcos de carreira, cada um valendo reputação:
 | Escritório com equipe | chegar ao terceiro nível de sede |
 | Uma carreira inteira ao lado | ter um cliente que se aposentou com você |
 | Cem milhões faturados | somar R$ 100 mi de receita acumulada |
+| Cliente na Copa do Mundo | ter um cliente convocado para a seleção |
 
 ### Rivais e ranking
 
@@ -163,6 +188,9 @@ Oito marcos de carreira, cada um valendo reputação:
   assim a vantagem na temporada 15 fica perto de 20%.
 - A Mesa mostra sua posição e quanto falta para passar a próxima. A Análise mostra a corrida
   em gráfico.
+- **Rivais com cara:** a cada temporada as rivais fecham negócios (vendas, assinaturas,
+  filiais na Europa) que aparecem nas notícias, no relatório ("Mercado das rivais") e no
+  Ranking, com o faturamento de cada uma na temporada, a última manchete e o maior negócio.
 
 ---
 
@@ -239,8 +267,32 @@ encerra a conversa até a próxima.
 O trade-off da cláusula: uma cláusula baixa derruba a chance de aceite, mas uma proposta que
 cobre a cláusula não pode ser barrada pelo clube.
 
+### Pré-contrato (Bosman)
+
+- Disponível no **último ano** de contrato ou com o contrato **vencido**, na aba Negociar.
+- Clubes interessados oferecem levar o jogador **de graça**: o clube atual não recebe nada, o
+  dinheiro vira luvas para o jogador e a sua comissão sai delas (30% das luvas mais um ano de
+  comissão de salário). Na média rende o mesmo que uma venda, mas o clube não pode barrar.
+- No último ano ele joga a temporada no clube atual e muda na virada; o clube costuma encostar
+  quem vai embora (50% de cair um nível no elenco). Com o contrato vencido, muda na hora.
+- Pré-contrato não paga direitos econômicos: a sua fatia vira zero.
+- Contrato **vencido** que ninguém resolver na janela (renovação ou pré-contrato): quando a
+  temporada roda, ele assina com o clube que aparecer, por salário menor e sem comissão, e perde
+  8 de confiança. A equipe tenta pré-contrato quando não consegue renovar.
+- Contrato vencido não recebe proposta de compra (vira pré-contrato) e não pode ser emprestado.
+
+### Direitos econômicos
+
+- Na aba Negociar, compre 10% dos direitos de um cliente ao clube dele, até 30%. Preço: 10,5%
+  do valor de mercado por fatia.
+- Na próxima venda, você recebe a fatia do valor da transferência.
+- Pré-contrato, saída livre e aposentadoria não pagam nada. Se ele sair da agência (rescisão ou
+  assédio), a fatia é revendida por 80% do valor.
+- A carteira de direitos aparece na Análise e entra no valor da agência.
+
 ### Empréstimo
 
+- Só empresta quem tem contrato em vigor e não assinou pré-contrato.
 - Clubes menores levam o jogador por **uma temporada**, com status prometido e salário assumido
   por eles. A comissão é menor, mas resolve o cliente encalhado.
 - Emprestar cancela as propostas de compra que estavam na mesa.
@@ -317,7 +369,7 @@ Chance de ~2% por temporada, que sobe com a idade. Derruba jogos, nível e fama 
 
 ---
 
-## 8. Metas e acontecimentos
+## 8. Metas, acontecimentos e Copa do Mundo
 
 ### Metas da temporada
 
@@ -358,6 +410,19 @@ o efeito antes de você escolher.
 
 ---
 
+### Copa do Mundo
+
+- A cada 4 temporadas (4, 8, 12...), no fim da temporada. A Mesa mostra, no ano da Copa, a chance
+  de convocação de cada cliente; nos outros anos, o termômetro avisa quando é a próxima. A ficha
+  mostra a chance de cada um.
+- A seleção convoca quem tem nível, fama e minutos (titular ou rodando o elenco), com bônus para
+  quem joga em liga forte.
+- Convocado: fama de +2 a +24 conforme as notas, +6 de confiança, reputação para a agência. O
+  Brasil é campeão em ~22% das Copas (+5 de fama para os convocados, prêmio de campeão do mundo).
+  O melhor em campo pode virar **craque da Copa** (+10 de fama, +2 de reputação).
+- Quem tinha chance boa (40% ou mais) e ficou fora perde 4 de confiança.
+- Depois da Copa o mercado esquenta (+0,06 no ciclo). O relatório traz um card da Copa.
+
 ## 9. Fim de carreira
 
 Não há prazo: a agência dura o quanto você quiser. A partir da temporada 10, a aba Escritório
@@ -371,7 +436,8 @@ oferece **vender a agência**, que encerra a carreira com o valor dela e um tít
 | a partir de R$ 150 mi | Potência internacional |
 | a partir de R$ 500 mi | Lenda do mercado |
 
-O valor e o título atuais aparecem sempre na sede. A melhor venda fica gravada e aparece na tela
+O valor e o título atuais aparecem sempre na sede. O valor inclui 80% da carteira de direitos
+econômicos e metade do investimento na academia. A melhor venda fica gravada e aparece na tela
 inicial, junto com o recorde de faturamento.
 
 O jogo também acaba se o escritório quebrar (caixa abaixo de −R$ 200 mil) ou se ficar sem
@@ -385,11 +451,11 @@ clientes e sem caixa para ir atrás de outro.
 
 | Aba | Conteúdo |
 |---|---|
-| **Mesa** | primeiros passos (três primeiras temporadas), acontecimentos, metas da temporada, propostas que passaram pela diretriz, pendências dos craques, termômetro do mercado, corrida das agências, o que a equipe fez, botão de rodar a temporada |
+| **Mesa** | primeiros passos (três primeiras temporadas), acontecimentos, Copa do Mundo (no ano da Copa), metas da temporada, propostas que passaram pela diretriz, pendências dos craques, termômetro do mercado, corrida das agências, o que a equipe fez, botão de rodar a temporada |
 | **Clientes** | craques com você e clientes com a equipe, em seções; estrela para marcar craque; nível, valor, contrato, confiança com rosto de humor; seletor de diretriz; ação direta na linha; quem já foi seu |
-| **Nomes** | quem o escritório trouxe; aviso de rival de olho; assinar e sondar em um toque; filtros e ordenação |
+| **Nomes** | quem o escritório trouxe; aviso de rival de olho; garotos da sua academia; assinar e sondar em um toque; filtros e ordenação |
 | **Análise** | gráfico de caixa e receita, gráfico da corrida das agências, painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
-| **Escritório** | sede (com valor da agência e venda), estrutura, marcos, ranking, notícias |
+| **Escritório** | sede (dificuldade, valor da agência e venda), estrutura (melhorias e academia), marcos, ranking (com as rivais), notícias, backup |
 
 A barra de baixo tem ícones desenhados (SVG) e mostra o número de pendências na Mesa.
 
@@ -397,9 +463,9 @@ A barra de baixo tem ícones desenhados (SVG) e mostra o número de pendências 
 
 | Aba | Conteúdo |
 |---|---|
-| **Resumo** | números, quem cuida (você ou a equipe), diretriz, confiança, pendências |
+| **Resumo** | números, quem cuida (você ou a equipe), chance de convocação, direitos, pré-contrato, origem na academia, diretriz, confiança, pendências |
 | **Carreira** | gráfico de nível (com o teto tracejado), gráfico de valor de mercado, prêmios, temporadas, conta aberta do valor, leitura |
-| **Negociar** | assédio, propostas, empréstimo, mesa de renovação, conversa, rescisão, extrato de confiança |
+| **Negociar** | assédio, propostas, empréstimo, pré-contrato, direitos econômicos, mesa de renovação, conversa, rescisão, extrato de confiança |
 
 ### Rodar a temporada
 
@@ -410,6 +476,12 @@ ligado no aparelho, vai direto ao relatório.
 O relatório abre com três destaques (faturamento, variação do caixa, movimento no ranking) e
 traz caixa, clientes, metas, janela de transferências, equipe e acontecimentos. Pode ser reaberto
 em Escritório → Notícias.
+
+### Backup
+
+Escritório → Backup: **baixar arquivo** (`.json`), **copiar código** (para colar em notas ou
+e-mail) ou **importar** (arquivo ou código). A tela inicial também tem "Importar uma carreira
+salva". Importar substitui a carreira do aparelho, depois de confirmar.
 
 ### Custo em toques
 
@@ -436,10 +508,12 @@ evolução      = base(idade) · (0,2 + minutos) · suporte
 fama         += (ref da liga + (nota − 6,1)·20 + palco − fama) · peso(minutos, palco)
 
 renda         = comissão anual sobre salários + sua parte da imagem
-valorAgência  = caixa + 6 · renda + 0,08 · carteira + 0,05 · reputação
+valorAgência  = caixa + 6 · renda + 0,08 · carteira + 0,05 · reputação + 0,8 · direitos + 4 · nívelAcademia
+pré-contrato  = luvas (10% a 21% do valor cheio) · 0,3 + salário · comissão
+convocação    = (nível − 68)/14 · (0,4 + fama/100) · (1 se joga, 0,45 se não) · (1,1 se liga forte, 0,85 se não)
 meta          = paga 18% a 30% da renda (arredondado) e 1–2 de reputação; bônus de 25% da renda pelas três
 rivalBase     = base · (1,205 a 1,255 + ruído) · variação do ciclo, por temporada
-rivalTrack   += (seuFaturamentoDaTemporada · força · (1,2 se você lidera) − rivalTrack) · 0,6
+rivalTrack   += (seuFaturamentoDaTemporada · força · dificuldade · (pressão se você lidera) − rivalTrack) · 0,6
 rivalAno      = max(rivalBase, rivalTrack)          força = 0,5 · 0,65 · 0,8 · 0,95 · 1,12 · 1,3
 qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação da equipe)
 ```
@@ -460,6 +534,7 @@ qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação 
 - A cada mudança publicada, suba a versão `CACHE` em `sw.js` para o app instalado trocar o cache.
 - Saves antigos continuam valendo: o carregamento completa os campos novos (rivais, metas,
   acontecimentos) quando faltam.
+- Saves e backups antigos sem dificuldade entram como Normal.
 - As mudanças desta rodada foram validadas com bots no navegador (Playwright): um que joga
   carreiras inteiras para medir o equilíbrio, um que clica em botões aleatórios e um que audita
   o estado do jogo a cada temporada em carreiras de 80 temporadas. Os bots não estão no
@@ -469,15 +544,15 @@ qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação 
 
 ## 13. Backlog
 
-Itens pesquisados e ainda não implementados.
+Itens pesquisados e ainda não implementados. O pré-contrato (Bosman), que estava aqui, foi
+implementado (seção 5).
 
 | # | Ideia | Resumo | O que acrescenta |
 |---|---|---|---|
 | 1 | **Licença e teto de comissão (FFAR)** | exame e licença anual; tetos de 3%/5%/10% por jurisdição, com a Inglaterra fora da regra | porta de entrada e arbitragem entre mercados |
 | 2 | **Mandato de dois anos** | o contrato de representação expira e precisa ser renovado com o próprio cliente | janela legítima de assédio às rivais |
 | 3 | **Dupla representação** | atuar pelo jogador ou pelo clube comprador; fazer os dois paga o dobro | dilema dinheiro × confiança |
-| 4 | **Pré-contrato (Bosman)** | deixar o contrato correr até os últimos seis meses | clube não recebe; vira luvas para o jogador e comissão para você |
-| 5 | **Mecanismo de solidariedade** | até 5% (6% no Brasil) de cada transferência vai para os clubes formadores | dedução na conta aberta |
+| 4 | **Mecanismo de solidariedade** | até 5% (6% no Brasil) de cada transferência vai para os clubes formadores | dedução na conta aberta |
 
 ---
 
@@ -495,6 +570,8 @@ Itens pesquisados e ainda não implementados.
 | Equipe e craques | a partir da sala alugada a equipe cuida da rotina; você só dos craques | com muitos clientes, tomar todas as decisões ficava chato e o jogador parava de jogar |
 | Metas e acontecimentos | três metas curtas e até duas cartas de escolha por janela | cada temporada precisava de um motivo próprio e de variedade |
 | Fim sem prazo | carreira sem limite de temporadas, encerrada pela venda da agência | uma agência dura mais que a carreira de uma pessoa |
+| Copa e pré-contrato | Copa a cada 4 temporadas; contrato vencido passou a ter consequência | o jogo é de timing: segurar até a Copa e deixar o contrato correr são decisões de timing |
+| Onde gastar | academia própria e direitos econômicos | depois da sede máxima o caixa acumulava sem uso |
 
 ---
 
@@ -512,5 +589,6 @@ Datas de 2026.
 | 27/10 | Metas e acontecimentos | metas da temporada; acontecimentos; disputa pelos garotos; venda da agência; temporada com suspense; gráficos; rosto de humor |
 | 27/10 | Correções | empréstimo cancela propostas e não renova com o clube do empréstimo (em todas as telas); botão de transferência com o destino certo; pendência fantasma; aviso apontando a proposta errada; erro ao tocar proposta que sumiu |
 | 27/10 | Auditoria | acontecimento que perde a validade; equipe não empresta quem tem proposta grande; encerrar relação limpa as propostas |
-| 27/10 | Dificuldade | rivais perseguem o seu faturamento; a líder vira alvo (mais assédio, mais disputa por garotos, rivais investindo) |
 | 27/10 | Correção | faixa de nível e teto: em ~1 de cada 5 jogadores ela não continha o valor real e "pulava" a cada sondagem; agora sempre contém e só aperta |
+| 27/10 | Dificuldade | rivais perseguem o seu faturamento; a líder vira alvo (mais assédio, mais disputa por garotos, rivais investindo) |
+| 27/10 | Copa, pré-contrato e mais | Copa do Mundo; pré-contrato (Bosman) e fim de contrato com consequência; academia; direitos econômicos; dificuldade; rivais com manchetes; backup da carreira |

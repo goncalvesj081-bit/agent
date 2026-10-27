@@ -179,6 +179,11 @@ nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
 .susp-l .tag-s{flex-basis:100%;display:flex;gap:6px}
 .susp-l .tag-s:empty{display:none}
 
+.copa{border-color:var(--ac)}
+.copa .card-h h2{color:var(--ac)}
+.nw.riv{color:var(--mut)}
+.nw.riv b{color:var(--info)}
+
 /* craques e equipe */
 .sec-h{padding:9px 13px 7px;font-size:11.5px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--mut);background:var(--sur2);border-bottom:1px solid var(--line)}
 .sec-h span{font-weight:500;text-transform:none;letter-spacing:0;margin-left:6px;color:var(--mut2)}
@@ -267,11 +272,19 @@ nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
     <input id="nome-esc" type="text" maxlength="28" placeholder="ex.: JP Sports"
       style="width:100%;padding:12px;border-radius:8px;background:var(--sur);border:1px solid var(--line2);color:var(--tx);font:inherit">
   </div>
-  <button class="btn" id="btn-novo" style="margin-top:10px">Abrir o escritório</button>
+  <div style="margin-top:12px">
+    <span style="display:block;font-size:12px;color:var(--mut);margin-bottom:6px">Dificuldade</span>
+    <div class="seg" role="group" aria-label="Dificuldade" style="margin-top:0" id="seg-dif">
+      <button data-difn="tranquilo">Tranquilo</button><button data-difn="normal" aria-pressed="true">Normal</button><button data-difn="dificil">Difícil</button>
+    </div>
+    <p class="hint" id="dif-d" style="margin:6px 0 0">o jogo como foi pensado</p>
+  </div>
+  <button class="btn" id="btn-novo" style="margin-top:12px">Abrir o escritório</button>
   <button class="btn sec" id="btn-cont" hidden>Continuar carreira salva</button>
   <button class="btn sec" id="btn-inst" hidden>Instalar o app</button>
   <p class="hint" id="inst-ios" hidden style="margin-top:10px">Para instalar no iPhone: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.</p>
   <p class="hint" style="margin-top:14px" id="intro-rec"></p>
+  <button class="lnk" id="btn-impintro" style="padding-left:0">Importar uma carreira salva (backup)</button>
 </div></div>
 
 <script>
@@ -485,6 +498,13 @@ function alcance(){return escr().alc+niv('olh')*10;}
 var AGENCIAS=['Prado & Associados','Gol Sports','Vieira Talentos','MRC Management','Estrela Agência','Fair Play Brasil'];
 /* faturamento anual inicial de cada rival (R$ mi); crescem ~20% por temporada */
 var RIVAL_ANO=[0.05,0.09,0.15,0.24,0.38,0.6];
+/* dificuldade: caixa inicial, forca da perseguicao, crescimento proprio e pressao na lideranca */
+var DIF={
+  tranquilo:{n:'Tranquilo',caixa:0.3,forca:0.75,g:-0.03,lider:1.1,d:'mais caixa no começo e rivais mais lentas'},
+  normal:{n:'Normal',caixa:0.18,forca:1,g:0,lider:1.2,d:'o jogo como foi pensado'},
+  dificil:{n:'Difícil',caixa:0.12,forca:1.15,g:0.015,lider:1.3,d:'menos caixa e rivais que não dão folga'}
+};
+function dif(){return DIF[(S&&S.dif)||'normal']||DIF.normal;}
 /* quanto do seu faturamento cada rival persegue */
 var RIVAL_FORCA=[0.5,0.65,0.8,0.95,1.12,1.3];
 function rivalDe(n){for(var i=0;i<S.rivais.length;i++)if(S.rivais[i].n===n)return S.rivais[i];return null;}
@@ -526,7 +546,7 @@ function gastar(v,p){
 function comissaoAno(){var t=0;S.clientes.forEach(function(p){t+=p.ct.sal*taxaCom();});return t;}
 function imagemDe(p){return 0.035*ECO[divDe(p.clube)]*Math.pow(cl(p.fama,18,99)/55,2.6)*(1+niv('ass')*0.5);}
 function imagemAno(){var t=0;S.clientes.forEach(function(p){t+=imagemDe(p)*0.2;});return t;}
-function custoAno(){return escr().cus+(S.obras.length?0:0);}
+function custoAno(){return escr().cus+(nivAcad()?ACAD[nivAcad()-1].cus:0);}
 function carteira(){var t=0;S.clientes.forEach(function(p){t+=valor(p);});return t;}
 
 /* ---------- conhecimento e faixa ---------- */
@@ -653,6 +673,7 @@ function darPremios(p,t,meu){
 function chanceAssinar(p){
   var b=0.30+S.rep/110+p.conh*0.45+niv('jur')*0.05-cl(p.fama-40,0,60)/115;
   if(p.agencia)b-=0.24;
+  if(p.academia)b+=0.35;
   if(p.recusou===S.temp)b-=0.35;
   else if(p.recusou===S.temp-1)b-=0.12;
   return cl(b,0.04,0.94);
@@ -696,6 +717,7 @@ function segurarCliente(p){
   return false;
 }
 function rescindir(p){
+  liquidarDir(p,'saiu');
   S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
   delete S.props[p.id];if(S.emps)delete S.emps[p.id];
   p.agencia=pick(AGENCIAS);
@@ -778,6 +800,11 @@ function fecharTransfer(p,of,futuro){
     p.sellon=0;
   }
   if(futuro){com*=0.45;p.sellon=(p.sellon||0)+0.15;}
+  if(p.dir){
+    var fatia=of.preco*p.dir.pct;receber(fatia,'direitos',p);
+    S.noticias.push({t:'Seus '+Math.round(p.dir.pct*100)+'% dos direitos de <b>'+esc(p.nome)+'</b> renderam '+din(fatia)+' na venda.',k:'good'});
+    p.dir=null;
+  }
   p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;p.emprest=null;
   if(S.emps)delete S.emps[p.id];
   mexeConf(p,stIdx(of.status)>=2?11:-6,stIdx(of.status)>=2?'saiu para jogar no '+clube(of.c).n:'foi para o banco do '+clube(of.c).n);
@@ -794,6 +821,8 @@ function fecharTransfer(p,of,futuro){
 
 /* ---------- emprestimo ---------- */
 function gerarEmprestimos(p){
+  /* so empresta quem tem contrato e nao tem pre-contrato assinado */
+  if(p.pre||p.ct.ate<=S.temp)return [];
   var l=[],tent=0,c0=clube(p.clube);
   while(l.length<3&&tent++<160){
     var c=MUNDO[Math.floor(Math.random()*MUNDO.length)];
@@ -879,7 +908,11 @@ function equipeTrabalha(){
       var pr=propostaBase(p),ok=false;
       for(var k=0;k<2&&!ok;k++){if(Math.random()<chanceRenov(p,pr)*qualiEquipe())ok=true;else pr.sal*=0.95;}
       if(ok){var com=fecharRenov(p,pr);log.push({t:'Renovou <b>'+esc(p.nome)+'</b> até '+(S.temp+pr.anos)+'. Comissão de '+din(com)+'.',k:'good'});}
-      else log.push({t:'Não fechou a renovação de <b>'+esc(p.nome)+'</b>'+(p.ct.ate<=S.temp?': contrato vencido':'')+'.',k:p.ct.ate<=S.temp?'bad':''});
+      else if(podePre(p)){
+        var pre=gerarPre(p).filter(function(o){return opiniaoCliente(p,o).quer;})[0];
+        if(pre){var c2=fecharPre(p,pre);log.push({t:'Sem renovação, fechou pré-contrato de <b>'+esc(p.nome)+'</b> com o '+clube(pre.c).n+'. Comissão de '+din(c2)+'.',k:'good'});ok=true;}
+      }
+      if(!ok)log.push({t:'Não fechou a renovação de <b>'+esc(p.nome)+'</b>'+(p.ct.ate<=S.temp?': contrato vencido':'')+'.',k:p.ct.ate<=S.temp?'bad':''});
     }
     if(p.exig&&p.exig.t==='jogar'&&!p.emprest&&!S.props[p.id]){
       var em=gerarEmprestimos(p).filter(function(o){return stIdx(o.status)>=2;});
@@ -998,7 +1031,22 @@ function campanha(){
 }
 function rodarTemporada(){
   S.evs=[];
-  var posAnt=posicao(),caixaAnt=S.caixa,lider=posAnt===1;
+  var posAnt=posicao(),caixaAnt=S.caixa,lider=posAnt===1,copaRes=null;
+  /* contrato vencido que ninguem resolveu na janela: ele fica livre e assina com quem aparece */
+  S.clientes.forEach(function(p){
+    if(p.emprest||p.pre||p.ct.ate>S.temp)return;
+    var c0=clube(p.clube),dest=null;
+    for(var k=0;k<120&&!dest;k++){var x=MUNDO[Math.floor(Math.random()*MUNDO.length)];if(x.id!==p.clube&&x.nv<=c0.nv+2&&x.nv>=c0.nv-14&&!art19(p,x.id))dest=x;}
+    if(!dest){p.ct={sal:salarioJusto(p)*0.85,ate:S.temp+2,cl:null};mexeConf(p,-6,'renovou no fim sem você negociar');
+      S.evs.push({t:'<b>'+esc(p.nome)+'</b> ficou sem contrato e acabou renovando no '+c0.n+' por menos.',k:'bad'});return;}
+    var g=p.nv-dest.nv;
+    p.clube=dest.id;p.ct={sal:salarioJusto(p,dest.id)*0.85,ate:S.temp+2};p.status=g>=4?'titular':(g>=-4?'rodando':'reserva');
+    if(p.dir){S.noticias.push({t:'Seus direitos de <b>'+esc(p.nome)+'</b> não renderam nada: ele saiu livre.',k:'bad'});p.dir=null;}
+    mexeConf(p,-8,'ficou sem contrato e você não resolveu');
+    S.evs.push({t:'<b>'+esc(p.nome)+'</b> ficou sem contrato e assinou com o '+dest.n+' pelo que apareceu. Sem comissão para você.',k:'bad'});
+  });
+  /* quem nao e seu renova sozinho, sem alarde */
+  S.pool.concat(S.exCli).forEach(function(p){if(p.ct.ate<=S.temp)p.ct={sal:salarioJusto(p),ate:S.temp+ri(2,4)};});
   var det=[],rel=[];
   todos().forEach(function(p){
     var c=clube(p.clube),ref=refDiv(divDe(p.clube)),antes=p.nv;
@@ -1050,6 +1098,7 @@ function rodarTemporada(){
   });
   campanha();
   moverCiclo();
+  if(anoDeCopa(S.temp))copaRes=copa();
   /* comissao recorrente e custos */
   var com=comissaoAno(),img=imagemAno(),cus=custoAno();
   S.clientes.forEach(function(p){p.rendeu=(p.rendeu||0)+p.ct.sal*taxaCom()+imagemDe(p)*0.2;});
@@ -1057,14 +1106,22 @@ function rodarTemporada(){
   S.caixa-=cus;S.custoAcum=(S.custoAcum||0)+cus;
   det.push(['Comissão sobre salários ('+pc(taxaCom())+')',com]);
   det.push(['Direitos de imagem (sua parte)',img]);
-  det.push(['Custo do escritório',-cus]);
+  det.push(['Custo do escritório'+(nivAcad()?' e da academia':''),-cus]);
   /* obras */
   S.obras=S.obras.filter(function(o){
     o.restam--;
     if(o.restam>0)return true;
     if(o.tipo==='escr'){S.escr=o.alvo;S.noticias.push({t:'Nova sede: <b>'+ESCR[o.alvo].n+'</b>.',k:'good'});S.evs.push({t:'Sua agência agora é: <b>'+ESCR[o.alvo].n+'</b>.',k:'good'});}
+    else if(o.tipo==='acad'){S.acad=o.alvo;S.evs.push({t:'Sua academia chegou ao nível '+o.alvo+'.',k:'good'});}
     else {S.melh[o.tipo]=o.alvo;S.evs.push({t:o.nome+' chegou ao nível '+o.alvo+'.',k:'good'});}
     return false;
+  });
+  /* pre-contratos: muda de clube na virada */
+  S.clientes.forEach(function(p){
+    if(!p.pre)return;
+    var de=clube(p.clube).n;
+    p.clube=p.pre.c;p.ct={sal:p.pre.sal,ate:S.temp+1+p.pre.anos};p.status=p.pre.status;p.pre=null;
+    S.evs.push({t:'<b>'+esc(p.nome)+'</b> deixou o '+de+' de graça e se apresentou ao '+clube(p.clube).n+'.',k:'good'});
   });
   /* volta de emprestimo */
   S.clientes.forEach(function(p){
@@ -1080,6 +1137,7 @@ function rodarTemporada(){
     if(p.idade<33)return;
     if(Math.random()>cl((p.idade-32)*0.24,0,0.9))return;
     S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
+    liquidarDir(p,'aposentou');
     p.aposentado=S.temp;S.exCli.push(p);
     S.rep=cl(S.rep+1.2,0,100);
     S.evs.push({t:'<b>'+esc(p.nome)+'</b> pendurou as chuteiras aos '+p.idade+' anos. Em '+(S.temp-p.desde)+' temporadas com você, rendeu '+din(p.rendeu||0)+'.',k:'big'});
@@ -1105,6 +1163,7 @@ function rodarTemporada(){
     var risco=cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04;
     if(Math.random()<risco){
       var ag=p.assedio?p.assedio.ag:pick(AGENCIAS);p.agencia=ag;
+      liquidarDir(p,'saiu');
       var rv=rivalDe(ag);if(rv){var ganho=p.ct.sal*0.07+imagemDe(p)*0.2;rv.ano+=ganho;if(rv.base!==undefined)rv.base+=ganho;}
       S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
       S.exCli.push(p);perdidos.push(p);
@@ -1132,12 +1191,13 @@ function rodarTemporada(){
   var alvo=escr().nomes+niv('olh')*2;
   while(S.pool.length<alvo)S.pool.push(gerarJogador());
   S.pool.forEach(function(p){
-    if(!p.agencia&&p.pot>=58&&Math.random()<(lider?0.45:0.3))p.rival=pick(AGENCIAS);
+    if(!p.agencia&&!p.academia&&p.pot>=58&&Math.random()<(lider?0.45:0.3))p.rival=pick(AGENCIAS);
   });
+  gerarDaAcademia();
   /* propostas pelos seus clientes */
   S.props={};
   S.clientes.forEach(function(p){
-    if(p.emprest)return;
+    if(p.emprest||p.pre||p.ct.ate<=S.temp+1)return; /* na proxima janela o contrato esta vencido: vira pre-contrato */
     var of=gerarPropostas(p);
     if(of.length)S.props[p.id]=of;
   });
@@ -1151,11 +1211,12 @@ function rodarTemporada(){
        a rival fatura o maior dos dois, sem um inflar o outro */
     if(r.base===undefined){r.base=r.ano;r.track=0;}
     r.base=r.base*cl(r.g+gs()*0.05,1.08,1.36)*S.ciclo.v/(S.ciclo.ant||1);
-    r.track+=(media*(r.forca||RIVAL_FORCA[k%RIVAL_FORCA.length])*(lider?1.2:1)-r.track)*0.6;
+    r.track+=(media*(r.forca||RIVAL_FORCA[k%RIVAL_FORCA.length])*dif().forca*(lider?dif().lider:1)-r.track)*0.6;
     r.ano=Math.max(r.base,r.track);
     r.fat+=r.ano;
   });
   S.ciclo.ant=S.ciclo.v;
+  var riv=manchetesRivais();riv.forEach(function(e){S.noticias.push(e);});
   S.hist.push({t:S.temp,cx:S.caixa,rec:S.recTemp,cli:S.clientes.length,val:carteira(),ciclo:S.ciclo.v,
     eu:S.receita,rf:S.rivais.map(function(r){return +r.fat.toFixed(2);})});
   checarMarcos();
@@ -1165,8 +1226,8 @@ function rodarTemporada(){
   if(S.exCli.length>14)S.exCli=S.exCli.slice(-14);
   S.rel={t:S.temp,det:det,rel:rel,evs:S.evs,rec:S.recTemp,caixa:S.caixa,
          props:Object.keys(S.props).length,perdidos:perdidos.length,janela:S.janela,
-         pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt};
-  S.recTemp=0;S.temp++;S.sondUsadas=0;S.emps={};S.renovTent={};
+         pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt,copa:copaRes,rivais:riv};
+  S.recTemp=0;S.temp++;S.sondUsadas=0;S.emps={};S.renovTent={};S.pres={};
   S.rel.equipe=(S.janela.equipe||[]).concat(equipeTrabalha());
   S.rel.metas=S.metasRes;
   gerarMetas();gerarEventos();
@@ -1247,7 +1308,7 @@ var EVENTOS=[
    ops:function(p){var v=bonito(Math.max(0.01,Math.min(S.caixa*0.15,p.ct.sal*0.4)));return [
      {t:'Adiantar '+din(v),d:'caixa −'+din(v)+' · confiança +9',f:function(){gastar(v,p);mexeConf(p,9,'você ajudou a família');}},
      {t:'Explicar que não dá',d:'confiança −6',f:function(){mexeConf(p,-6,'você negou ajuda à família');}}];}},
-  {id:'renovacao',ok:function(p){return !p.emprest&&p.ct.ate>S.temp&&p.ct.ate<=S.temp+2;},
+  {id:'renovacao',ok:function(p){return !p.emprest&&!p.pre&&p.ct.ate>S.temp&&p.ct.ate<=S.temp+2;},
    txt:function(p){return 'O <b>'+esc(clube(p.clube).n)+'</b> quer renovar <b>'+esc(p.nome)+'</b> agora: 10% acima do mercado e 4 temporadas.';},
    ops:function(p){return [
      {t:'Aceitar',d:'comissão de renovação · contrato longo',f:function(){var pr=propostaBase(p);pr.sal=salarioJusto(p)*1.1;pr.anos=4;pr.luvas=pr.sal*0.5;var c=fecharRenov(p,pr);return 'Renovado. Comissão de '+din(c)+'.';}},
@@ -1288,9 +1349,150 @@ function aplicarEvento(e,i,auto){
   return r;
 }
 
+/* ---------- Copa do Mundo ----------
+   A cada 4 temporadas, no fim da temporada. Seus clientes sao brasileiros: a selecao
+   convoca quem tem nivel, fama e minutos. Boa Copa e salto de fama e de preco. */
+function anoDeCopa(t){return t%4===0;}
+function proximaCopa(){var t=S.temp;while(!anoDeCopa(t))t++;return t;}
+function chanceConv(p){
+  var b=cl((p.nv-68)/14,0,1)*cl(0.4+p.fama/100,0.4,1.25)*(stIdx(p.status)>=2?1:0.45)*(LIGAS[divDe(p.clube)].rep>=50?1.1:0.85);
+  return cl(b,0,0.95);
+}
+function copa(){
+  var conv=[],fora=[],campeao=Math.random()<0.22;
+  S.clientes.forEach(function(p){
+    var ch=chanceConv(p);
+    if(ch<=0)return;
+    if(Math.random()<ch){
+      var j=ri(2,7),nota=cl(6.2+(p.nv-75)/15+gs()*0.5,5,9.2);
+      conv.push({p:p,j:j,nota:nota});
+    }else if(ch>=0.4)fora.push(p);
+  });
+  var craque=null;
+  conv.forEach(function(c){if(c.nota>=7.5&&(!craque||c.nota>craque.nota))craque=c;});
+  if(craque&&Math.random()>0.35)craque=null;
+  conv.forEach(function(c){
+    var p=c.p,ganho=4+(c.nota-6.5)*6+(campeao?5:0)+(c===craque?10:0);
+    p.fama=cl(p.fama+cl(ganho,2,24),18,99);
+    mexeConf(p,6,'convocado para a Copa do Mundo');
+    S.rep=cl(S.rep+0.5+(c===craque?2:0),0,100);
+    if(!p.premios)p.premios=[];
+    if(c===craque)p.premios.push({id:'copa',n:'Craque da Copa',t:S.temp,liga:'Copa do Mundo'});
+    if(campeao)p.premios.push({id:'campeao',n:'Campeão do mundo',t:S.temp,liga:'Copa do Mundo'});
+  });
+  fora.forEach(function(p){mexeConf(p,-4,'ficou fora da Copa');});
+  if(conv.length)marcar('copa');
+  /* mercado pos-Copa fica mais quente */
+  S.ciclo.v=cl(S.ciclo.v+0.06,0.62,1.55);
+  S.evs.push({t:'<b>Copa do Mundo:</b> '+(campeao?'o Brasil foi campeão! ':'o Brasil caiu antes do título. ')+
+    (conv.length?conv.length+' cliente'+(conv.length>1?'s':'')+' seu'+(conv.length>1?'s':'')+' convocado'+(conv.length>1?'s':'')+'.':'Nenhum cliente seu foi convocado.'),k:'big'});
+  return {campeao:campeao,conv:conv.map(function(c){return {n:c.p.nome,j:c.j,nota:c.nota,craque:c===craque};}),fora:fora.map(function(p){return p.nome;})};
+}
+
+/* ---------- pre-contrato (Bosman) ----------
+   No ultimo ano, ou com o contrato vencido, o jogador pode assinar de graca com outro clube.
+   O clube atual nao recebe nada: o dinheiro vira luvas para ele e comissao para voce. */
+function podePre(p){return p.agencia==='VOCÊ'&&!p.emprest&&!p.pre&&p.ct.ate<=S.temp+1;}
+function gerarPre(p){
+  var ofs=[],tent=0,vm=valor(p)/fatorContrato(p);
+  var n=cl(Math.round(rnd(1,2)+p.fama/40),1,4);
+  while(ofs.length<n&&tent++<220){
+    var c=MUNDO[Math.floor(Math.random()*MUNDO.length)];
+    if(c.id===p.clube||ofs.some(function(o){return o.c===c.id;}))continue;
+    if(art19(p,c.id))continue;
+    if(Math.random()>interesse(p,c)/1.4)continue;
+    var g=p.nv-c.nv,st=g>=4?'titular':(g>=-4?'rodando':'reserva');
+    ofs.push({c:c.id,sal:salarioJusto(p,c.id)*rnd(1.1,1.5),luvas:vm*rnd(0.1,0.21),anos:ri(2,4),status:st,pre:true});
+  }
+  return ofs.sort(function(a,b){return b.luvas-a.luvas;});
+}
+function comPre(of){return of.luvas*0.3+of.sal*taxaCom();}
+function fecharPre(p,of){
+  var com=comPre(of),agora=p.ct.ate<=S.temp,antigo=clube(p.clube).n;
+  receber(com,'pre',p);
+  if(p.dir){S.noticias.push({t:'Seus '+Math.round(p.dir.pct*100)+'% dos direitos de <b>'+esc(p.nome)+'</b> não renderam nada: saiu de graça.',k:'bad'});p.dir=null;}
+  mexeConf(p,8,'assinou pré-contrato com o '+clube(of.c).n);
+  delete S.props[p.id];if(S.pres)delete S.pres[p.id];if(S.emps)delete S.emps[p.id];
+  if(agora){
+    p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;
+    S.noticias.push({t:'<b>'+esc(p.nome)+'</b> saiu de graça do '+antigo+' para o '+clube(of.c).n+'. Comissão de '+din(com)+'.',k:'good'});
+  }else{
+    p.pre={c:of.c,sal:of.sal,anos:of.anos,status:of.status};
+    /* o clube atual sabe que ele vai embora e costuma encostar */
+    if(Math.random()<0.5)p.status=STATUS[Math.max(0,stIdx(p.status)-1)][0];
+    S.noticias.push({t:'<b>'+esc(p.nome)+'</b> assinou pré-contrato com o '+clube(of.c).n+' e muda na virada. Comissão de '+din(com)+'.',k:'good'});
+  }
+  p.exig=null;
+  if(S.tc){S.tc.transf=(S.tc.transf||0)+1;}
+  return com;
+}
+
+/* ---------- direitos economicos ----------
+   Voce compra uma fatia (ate 30%) dos direitos de um cliente ao clube dele. Recebe essa fatia
+   do valor da proxima venda. Pre-contrato e aposentadoria nao pagam nada. */
+function precoDir(p){return valor(p)*0.1*1.05;}
+function comprarDir(p){
+  var c=precoDir(p),pct=(p.dir?p.dir.pct:0);
+  if(pct>=0.3)return {ok:false,m:'Você já tem o máximo: 30%.'};
+  if(c>S.caixa)return {ok:false,m:'10% custam '+din(c)+' e o caixa não cobre.'};
+  gastar(c);
+  p.dir={pct:pct+0.1,pago:(p.dir?p.dir.pago:0)+c};
+  S.noticias.push({t:'Você comprou 10% dos direitos econômicos de <b>'+esc(p.nome)+'</b> por '+din(c)+'.',k:''});
+  return {ok:true,m:'Agora você tem '+Math.round(p.dir.pct*100)+'% dos direitos de '+esc(p.nome)+'.'};
+}
+function valorDireitos(){var t=0;S.clientes.forEach(function(p){if(p.dir)t+=valor(p)*p.dir.pct;});return t;}
+/* quando o cliente sai da agencia, a fatia e revendida ao clube */
+function liquidarDir(p,motivo){
+  if(!p.dir)return;
+  var v=motivo==='aposentou'?0:valor(p)*p.dir.pct*0.8;
+  if(v>0)receber(v,'direitos');
+  S.noticias.push({t:(v>0?'Você revendeu seus '+Math.round(p.dir.pct*100)+'% dos direitos de <b>'+esc(p.nome)+'</b> por '+din(v)+'.':'Os direitos de <b>'+esc(p.nome)+'</b> acabaram com a aposentadoria.'),k:v>0?'':'bad'});
+  p.dir=null;
+}
+
+/* ---------- academia propria ---------- */
+var ACAD=[{c:8,t:2,cus:0.4,n:1},{c:25,t:2,cus:1.2,n:2},{c:70,t:2,cus:3.5,n:3}];
+function nivAcad(){return S.acad||0;}
+function gerarDaAcademia(){
+  var n=nivAcad()?ACAD[nivAcad()-1].n:0;
+  for(var k=0;k<n;k++){
+    var x=gerarJogador();x.agencia=null;x.idade=ri(15,17);x.pot=cl(x.pot+ri(6,14)+nivAcad()*2,x.nv+4,99);
+    x.conh=0.7;x.academia=true;x.rival=null;recalcEst(x);
+    S.pool.unshift(x);
+    S.evs.push({t:'Sua academia formou <b>'+esc(x.nome)+'</b>, '+x.idade+' anos. Ele está na aba Nomes.',k:'good'});
+  }
+}
+
+/* ---------- rivais com cara ---------- */
+/* nome de jogador que nao e de ninguem da sua carteira nem do radar */
+function nomeDeFora(){var n=nomeLivre();return todos().some(function(p){return p.nome===n;})?n+' '+'BCDFGJLMPRST'[ri(0,11)]+'.':n;}
+var PAISES_EUR=['Portugal','Espanha','Itália','Inglaterra','Alemanha','França','Holanda'];
+function manchetesRivais(){
+  var l=[];
+  S.rivais.forEach(function(r){
+    if(Math.random()>0.55)return;
+    var tipo=Math.random(),t='';
+    if(tipo<0.6){
+      var a=MUNDO[Math.floor(Math.random()*MUNDO.length)],b=null;
+      for(var k=0;k<40&&!b;k++){var x=MUNDO[Math.floor(Math.random()*MUNDO.length)];if(x.id!==a.id&&ECO[divDe(x.id)]>=ECO[divDe(a.id)])b=x;}
+      if(!b)return;
+      var v=bonito(Math.max(0.5,r.ano*rnd(4,14)));
+      t='vendeu '+nomeDeFora()+' do '+a.n+' ao '+b.n+' por '+din(v)+'.';
+      if(!r.maior||v>r.maior.v)r.maior={v:v,t:t,temp:S.temp};
+    }else if(tipo<0.85){
+      t='assinou com '+nomeDeFora()+', '+ri(16,19)+' anos, do '+MUNDO[Math.floor(Math.random()*MUNDO.length)].n+'.';
+    }else if(r.ano>3&&!r.filial){
+      r.filial=pick(PAISES_EUR);t='abriu um escritório em '+r.filial+'.';
+    }else return;
+    r.manchete={t:t,temp:S.temp};
+    l.push({t:'<b>'+r.n+'</b> '+t,k:'riv'});
+  });
+  return l;
+}
+
 /* ---------- vender a agencia (fim de carreira) ---------- */
 var TITULOS=[[0,'Agente de bairro'],[5,'Agência regional'],[30,'Agência nacional'],[150,'Potência internacional'],[500,'Lenda do mercado']];
-function valorAgencia(){return Math.max(0,S.caixa)+renda()*6+carteira()*0.08+S.rep*0.05;}
+function valorAgencia(){return Math.max(0,S.caixa)+renda()*6+carteira()*0.08+S.rep*0.05+valorDireitos()*0.8+nivAcad()*ACAD[0].c*0.5;}
 function tituloDe(v){var t=TITULOS[0][1];TITULOS.forEach(function(x){if(v>=x[0])t=x[1];});return t;}
 
 var MARCOS=[
@@ -1301,7 +1503,8 @@ var MARCOS=[
  {id:'cinco',n:'Cinco clientes ao mesmo tempo',d:'ter cinco na carteira de uma vez',rep:3},
  {id:'sede',n:'Escritório com equipe',d:'chegar ao terceiro nível de sede',rep:4},
  {id:'aposenta',n:'Uma carreira inteira ao lado',d:'ter um cliente que se aposentou com você',rep:5},
- {id:'fat',n:'Cem milhões faturados',d:'somar R$ 100 mi de receita acumulada',rep:6}
+ {id:'fat',n:'Cem milhões faturados',d:'somar R$ 100 mi de receita acumulada',rep:6},
+ {id:'copa',n:'Cliente na Copa do Mundo',d:'ter um cliente convocado para a seleção',rep:4}
 ];
 function marcar(id){
   if(S.marcos[id])return;
@@ -1324,14 +1527,14 @@ function checarMarcos(){
 }
 
 /* ---------- novo jogo ---------- */
-function novoJogo(nome){
-  S={nome:nome||'Sua agência',temp:1,seq:1,caixa:0.18,rep:5,receita:0,recTemp:0,escr:0,
+function novoJogo(nome,difId){
+  S={nome:nome||'Sua agência',dif:DIF[difId]?difId:'normal',temp:1,seq:1,caixa:(DIF[difId]||DIF.normal).caixa,rep:5,receita:0,recTemp:0,escr:0,
      div:MUNDO.map(function(x){return x.div0;}),ref:{},
      clientes:[],exCli:[],pool:[],obras:[],melh:{},noticias:[],hist:[],evs:[],
      props:{},rivais:[],sondUsadas:0,fim:null,rel:null,marcos:{},rec:{},custoAcum:0,planoPad:'ouvir',
      ciclo:{v:1.0,mom:0,f:'normal'},tut:{},eventos:[],metas:[],tc:{}};
   calcularRefs();
-  AGENCIAS.forEach(function(n,i){var a=RIVAL_ANO[i];S.rivais.push({n:n,ano:a,g:rnd(1.205,1.255),fat:a*3,forca:RIVAL_FORCA[i]});});
+  AGENCIAS.forEach(function(n,i){var a=RIVAL_ANO[i];S.rivais.push({n:n,ano:a,g:rnd(1.205,1.255)+dif().g,fat:a*3,forca:RIVAL_FORCA[i]});});
   for(var i=0;i<escr().nomes;i++)S.pool.push(gerarJogador());
   var cand=S.pool.filter(function(p){return !p.agencia;});
   var p0=cand.length?pick(cand):S.pool[0];
@@ -1353,6 +1556,7 @@ function calcularRefs(){
 }
 
 /* =================== estado de tela =================== */
+var difEscolhida='normal';
 var S=null,aba='mesa',subEsc='sede',filtro='TODOS',aberto=null,neg=null,fichaAba='res',aval=null,ordem='valor',
     scrollPos={},renderizada=null,relAberto=false,tToast=null;
 
@@ -1463,7 +1667,8 @@ function vTermo(){
     '<div class="i-sub" style="margin:0"><span>Mercado <b style="color:var(--tx)">'+S.ciclo.f+'</b> · valores ×'+n2(S.ciclo.v)+'</span><span>'+tend+'</span></div>'+
     '<div class="termo" style="--c:'+FASES[fi][2]+'">'+FASES.map(function(f,i){return '<i class="'+(i===fi?'on':'')+'"></i>';}).join('')+'</div>'+
     '<div class="termo-l">'+FASES.map(function(f,i){return i===fi?'<b>'+f[0]+'</b>':'<span>'+f[0]+'</span>';}).join('')+'</div>'+
-    '<p class="hint" style="margin:8px 0 0">'+dica+' Sondagens nesta janela: <b style="color:var(--tx)">'+S.sondUsadas+'/'+limSond()+'</b>.</p>'+
+    '<p class="hint" style="margin:8px 0 0">'+dica+' Sondagens nesta janela: <b style="color:var(--tx)">'+S.sondUsadas+'/'+limSond()+'</b>.'+
+      (anoDeCopa(S.temp)?'':' Próxima Copa: temporada '+proximaCopa()+'.')+'</p>'+
     '</div></div>';
 }
 function vCorrida(){
@@ -1518,8 +1723,16 @@ function vMetas(){
         (pg>0&&pg<1?'<div class="trk" style="margin-top:5px"><div class="bd" style="left:0;width:'+Math.round(pg*100)+'%;background:var(--ac)"></div></div>':'')+'</div></div>';
     }).join('')+'<p class="hint" style="margin:6px 0 4px">Cumprindo as três, ganha um bônus.</p></div></div>';
 }
+function vCopa(){
+  if(!anoDeCopa(S.temp))return '';
+  var l=S.clientes.map(function(p){return {p:p,ch:chanceConv(p)};}).filter(function(x){return x.ch>=0.05;}).sort(function(a,b){return b.ch-a.ch;});
+  return '<div class="card copa"><div class="card-h"><h2>Copa do Mundo</h2><span>no fim desta temporada</span></div><div class="card-b">'+
+    '<p class="hint" style="margin:0 0 8px">A seleção convoca quem tem nível, fama e minutos. Convocação dá fama e preço; Copa boa dá muito mais. Depois da Copa o mercado esquenta.</p>'+
+    (l.length?l.map(function(x){return '<div class="i-sub" style="margin:0 0 5px"><span>'+esc(x.p.nome)+' · '+stNome(x.p.status)+'</span><b style="color:'+(x.ch>=0.5?'var(--ac)':'var(--tx)')+'">'+pc(x.ch)+'</b></div>';}).join(''):
+      '<p class="hint" style="margin:0">Nenhum cliente seu está perto da seleção.</p>')+'</div></div>';
+}
 function vMesa(){
-  var h=vPassos()+vEventos()+vMetas();
+  var h=vPassos()+vEventos()+vCopa()+vMetas();
   /* propostas resolvidas em lote, sem entrar em ficha */
   var comProp=S.clientes.filter(function(p){return (S.props[p.id]||[]).length;});
   if(comProp.length){
@@ -1560,8 +1773,9 @@ function vMesa(){
     else if(p.exig)itens.push({p:p,t:'exigência',x:p.exig.txt,k:'bad'});
     else if((S.props[p.id]||[]).length)return;
     else if(p.emprest)return;
-    else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'contrato vencido no '+clube(p.clube).n,k:'bad'});
-    else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano de contrato',k:''});
+    else if(p.pre)return;
+    else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'vencido: renove ou feche pré-contrato nesta janela',k:'bad'});
+    else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano: renove ou busque pré-contrato',k:''});
   });
   h+='<div class="card"><div class="card-h"><h2>Sua mesa</h2><span>'+itens.length+' assunto'+(itens.length!==1?'s':'')+(temEquipe()?' · só craques':'')+'</span></div>';
   if(!itens.length)h+='<div class="card-b hint">'+(comProp.length?'Fora as propostas acima, nada pendente.':'Nada pendente. Dá para procurar nomes novos ou rodar a temporada.')+'</div>';
@@ -1613,7 +1827,7 @@ function vCli(){
       segPlano(p)+
       (temEquipe()&&!cq&&!temProp?'':'<div class="ofr-act" style="margin-top:9px">'+
       (temProp?'<button class="btn sec" data-pn="'+p.id+'">Ver '+temProp+' proposta'+(temProp>1?'s':'')+'</button>':
-       (p.emprest?'<span class="hint" style="flex:1">Emprestado: volta ao '+esc(clube(p.emprest.de).n)+' na virada e renova lá.</span>':
+       (p.pre?'<span class="hint" style="flex:1">Pré-contrato com o '+esc(clube(p.pre.c).n)+': muda na virada.</span>':p.emprest?'<span class="hint" style="flex:1">Emprestado: volta ao '+esc(clube(p.emprest.de).n)+' na virada e renova lá.</span>':
         '<button class="btn sec" data-pren="'+p.id+'">'+(venc?'Renovar contrato':'Negociar contrato')+'</button>'))+
       (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
        (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
@@ -1662,6 +1876,7 @@ function vNom(){
     h+='<div class="item" data-p="'+p.id+'">'+
       '<div class="i-top"><div><span class="i-pos">'+p.pos+'</span><span class="i-nm">'+esc(p.nome)+'</span></div>'+
       '<div class="i-val" style="font-size:12.5px">'+(p.agencia?'<span class="mut">'+esc(p.agencia)+'</span>':'<span class="pos">sem agente</span>')+'</div></div>'+
+      (p.academia&&!p.agencia?'<div class="olho" style="color:var(--ac)">Formado na sua academia: assinar é bem mais fácil</div>':'')+
       (p.rival&&!p.agencia?'<div class="olho">'+esc(p.rival)+' está de olho: assine nesta janela ou ela leva</div>':'')+
       '<div class="i-sub"><span>'+p.idade+' anos · '+esc(c.n)+' · '+ligaDe(p.clube).n+'</span><span>'+stNome(p.status)+'</span></div>'+
       '<div class="stat"><div>nível<b>'+faixaTxt(p)+'</b></div><div>teto<b>'+faixaPot(p).lo+'–'+faixaPot(p).hi+'</b></div>'+
@@ -1677,7 +1892,7 @@ function vNom(){
 
 /* ---------- escritorio ---------- */
 /* ---------- analise ---------- */
-function fonteNome(k){return {salario:'Comissão de salário',transf:'Transferências',renov:'Renovações e luvas',imagem:'Direitos de imagem e patrocínios',emprest:'Empréstimos',metas:'Metas da temporada'}[k]||k;}
+function fonteNome(k){return {salario:'Comissão de salário',transf:'Transferências',renov:'Renovações e luvas',imagem:'Direitos de imagem e patrocínios',emprest:'Empréstimos',metas:'Metas da temporada',pre:'Pré-contratos',direitos:'Direitos econômicos'}[k]||k;}
 function roi(p){
   var c=Math.max(0.004,p.custo||0.004);
   return (p.rendeu||0)/c;
@@ -1766,6 +1981,13 @@ function vAna(){
     '<div class="kv"><span>Nomes livres no radar</span><b>'+S.pool.filter(function(p){return !p.agencia;}).length+'</b></div>'+
     '</div></div>';
 
+  var comDir=S.clientes.filter(function(p){return p.dir;});
+  if(comDir.length){
+    h+='<div class="card"><div class="card-h"><h2>Direitos econômicos</h2><span>'+din(valorDireitos())+' hoje</span></div><div class="card-b"><table>'+
+      '<tr><th>Cliente</th><th class="r">Fatia</th><th class="r">Pagou</th><th class="r">Vale</th></tr>'+
+      comDir.map(function(p){var v=valor(p)*p.dir.pct;return '<tr><td>'+esc(p.nome)+'</td><td class="r">'+Math.round(p.dir.pct*100)+'%</td><td class="r">'+din(p.dir.pago)+'</td><td class="r '+(v>=p.dir.pago?'pos':'neg')+'">'+din(v)+'</td></tr>';}).join('')+
+      '</table></div></div>';
+  }
   /* graficos da trajetoria */
   var hh=S.hist.slice(-40);
   if(hh.length>=3){
@@ -1791,15 +2013,16 @@ function vAna(){
 }
 
 function vEsc(){
-  var subs=[['sede','Sede'],['estr','Estrutura'],['marcos','Marcos'],['rank','Ranking'],['nw','Notícias']];
+  var subs=[['sede','Sede'],['estr','Estrutura'],['marcos','Marcos'],['rank','Ranking'],['nw','Notícias'],['bkp','Backup']];
   var h='<div class="chips" style="border:1px solid var(--line);border-radius:9px;background:var(--sur);margin-bottom:11px">'+
     subs.map(function(s){return '<button class="chip" data-se="'+s[0]+'"'+(subEsc===s[0]?' aria-pressed="true"':'')+'>'+s[1]+'</button>';}).join('')+'</div>';
-  return h+({sede:vSede,estr:vEstr,marcos:vMarcos,rank:vRank,nw:vNw})[subEsc]();
+  return h+({sede:vSede,estr:vEstr,marcos:vMarcos,rank:vRank,nw:vNw,bkp:vBackup})[subEsc]();
 }
 function vSede(){
   var e=escr(),prox=ESCR[S.escr+1],obra=S.obras.filter(function(o){return o.tipo==='escr';})[0];
   var h='<div class="card"><div class="card-h"><h2>'+esc(S.nome||'Sua agência')+'</h2><span><button data-nome="1" style="color:var(--info);font-size:12px">renomear</button></span></div>'+
     '<div class="card-b"><div class="kv"><span>Sede</span><b>'+esc(e.n)+' <span class="mut" style="font-weight:400">(nível '+(S.escr+1)+' de '+ESCR.length+')</span></b></div>'+
+    '<div class="kv"><span>Dificuldade</span><b>'+dif().n+'</b></div>'+
     '<div class="kv"><span>Clientes que cabem</span><b>'+limCli()+'</b></div>'+
     '<div class="kv"><span>Craques com você</span><b>'+(temEquipe()?'até '+limCraques()+' · o resto com a equipe':'todos (sem equipe ainda)')+'</b></div>'+
     '<div class="kv"><span>Nomes por temporada</span><b>'+(e.nomes+niv('olh')*2)+'</b></div>'+
@@ -1837,6 +2060,15 @@ function vEstr(){
         '<button class="btn sec" data-inv="'+m.id+'"'+(c>S.caixa?' disabled':'')+'>Subir para o nível '+(lv+1)+' · '+din(c)+' · '+m.t[lv]+' temp.</button>')+
       '</div>';
   });
+  var la=nivAcad(),oa=S.obras.filter(function(o){return o.tipo==='acad';})[0],pa=ACAD[la];
+  h+='<div class="card-b">'+
+    '<div class="i-top"><div class="i-nm">Academia própria</div><div class="i-val" style="font-size:13px">nível '+la+'/3</div></div>'+
+    '<p class="hint" style="margin:4px 0 9px">Forma garotos todo ano ('+(la?ACAD[la-1].n:0)+' por temporada hoje), já bem conhecidos e muito mais fáceis de assinar. Custa caro e tem custo anual'+(la?' de '+din(ACAD[la-1].cus):'')+'.</p>'+
+    (S.escr<2?'<div class="hint">Disponível a partir do escritório com equipe.</div>':
+     oa?'<div class="hint wrn">Em obra: pronta em '+oa.restam+' temporada'+(oa.restam>1?'s':'')+'.</div>':
+     !pa?'<div class="hint pos">No máximo.</div>':
+      '<button class="btn sec" data-acad="1"'+(pa.c>S.caixa?' disabled':'')+'>'+(la?'Ampliar para o nível ':'Construir, nível ')+(la+1)+' · '+din(pa.c)+' · '+pa.t+' temp. · '+din(pa.cus)+'/ano</button>')+
+    '</div>';
   return h+'</div>';
 }
 function vMarcos(){
@@ -1857,6 +2089,14 @@ function vRank(){
     '<tr><th>#</th><th>Agência</th><th class="r">Faturou</th></tr>'+
     lista.map(function(x,i){return '<tr'+(x.eu?' class="eu"':'')+'><td>'+(i+1)+'</td><td>'+esc(x.n)+'</td><td class="r">'+din(x.f)+'</td></tr>';}).join('')+
     '</table><div class="kv" style="margin-top:8px"><span>Contra a agência mediana</span><b class="'+(S.receita>=mediana?'pos':'neg')+'">'+(S.receita>=mediana?'+':'')+din(S.receita-mediana)+'</b></div></div></div>';
+  var minhaAno=S.hist.length?S.hist[S.hist.length-1].rec||0:0;
+  h+='<div class="card"><div class="card-h"><h2>As rivais</h2><span>faturamento na última temporada</span></div>'+
+    S.rivais.slice().sort(function(a,b){return b.fat-a.fat;}).map(function(r){
+      return '<div class="card-b" style="border-bottom:1px solid var(--line)"><div class="i-top"><div class="i-nm">'+esc(r.n)+(r.filial?' <span class="mut" style="font-size:11.5px;font-weight:400">· filial em '+r.filial+'</span>':'')+'</div>'+
+        '<div class="i-val" style="font-size:13px">'+din(r.ano)+'<span class="mut" style="font-size:11px">/temp</span></div></div>'+
+        (r.manchete?'<p class="hint" style="margin:4px 0 0">Temp '+r.manchete.temp+': '+esc(r.manchete.t)+'</p>':'')+
+        (r.maior&&(!r.manchete||r.maior.t!==r.manchete.t)?'<p class="hint" style="margin:2px 0 0">Maior negócio: '+esc(r.maior.t)+'</p>':'')+'</div>';
+    }).join('')+'<div class="card-b hint">Você faturou '+din(minhaAno)+' na última temporada.</div></div>';
   return h+'<button class="btn sec" id="btn-reset">Fechar o escritório e recomeçar</button>';
 }
 function vNw(){
@@ -1904,6 +2144,10 @@ function fRes(p,meu,c,f,fp){
     (meu&&temEquipe()?'<div class="kv"><span>Quem cuida</span><b>'+(ehCraque(p)?'<span class="wrn">★</span> você (craque)':'sua equipe')+
       ' <button data-craque="'+p.id+'" style="color:var(--info);font-size:12px;font-weight:500;margin-left:4px">'+(ehCraque(p)?'passar para a equipe':'virar craque')+'</button></b></div>':'')+
     (meu?'<div class="kv"><span>Diretriz na janela</span><b>'+PLANOS.filter(function(x){return x.id===planoDe(p);})[0].n+'</b></div>':'')+
+    (meu&&chanceConv(p)>=0.05?'<div class="kv"><span>Seleção '+(anoDeCopa(S.temp)?'(Copa nesta temporada)':'(Copa na temp '+proximaCopa()+')')+'</span><b>'+pc(chanceConv(p))+' de convocação</b></div>':'')+
+    (p.dir?'<div class="kv"><span>Seus direitos econômicos</span><b class="pos">'+Math.round(p.dir.pct*100)+'% · '+din(valor(p)*p.dir.pct)+'</b></div>':'')+
+    (p.pre?'<div class="kv"><span>Pré-contrato</span><b class="wrn">assinado com o '+esc(clube(p.pre.c).n)+', muda na virada</b></div>':'')+
+    (p.academia?'<div class="kv"><span>Origem</span><b class="pos">sua academia</b></div>':'')+
     (p.sellon?'<div class="kv"><span>Você tem da próxima venda</span><b class="pos">'+Math.round(p.sellon*100)+'%</b></div>':'')+
     (p.idade<18?'<div class="kv"><span>Menor de idade</span><b class="wrn">artigo 19: só no mesmo país</b></div>':'')+
     (p.lesaoGrave===S.temp-1?'<div class="kv"><span>Saúde</span><b class="neg">voltando de lesão grave</b></div>':'')+
@@ -1931,7 +2175,7 @@ function fRes(p,meu,c,f,fp){
         avisos.map(function(a){return '<div class="nw"><b class="'+a[1]+'">'+esc(a[0])+'</b></div>';}).join('')+
         '<div class="ofr-act" style="margin-top:10px">'+
         ((S.props[p.id]||[]).length?'<button class="btn" data-fa="neg">Ver propostas</button>':
-          (p.emprest?'':'<button class="btn" data-pren="'+p.id+'">Negociar contrato</button>'))+
+          (p.emprest||p.pre?'':'<button class="btn" data-pren="'+p.id+'">Negociar contrato</button>'))+
         (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
          (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
         '</div></div></div>';
@@ -2054,13 +2298,42 @@ function fNeg(p,meu,c,f,fp){
         '<div class="ofr-act"><button class="btn" data-emp="'+p.id+':'+i+'">Emprestar</button></div></div>';
     });
     h+='</div>';
-  }else if(!p.emprest){
+  }else if(!p.emprest&&!p.pre&&p.ct.ate>S.temp){
     h+='<button class="btn sec" data-buscaremp="'+p.id+'" style="margin-bottom:11px">Buscar empréstimo para ele jogar</button>';
+  }
+  if(p.pre){
+    h+='<div class="card"><div class="card-h"><h2>Pré-contrato</h2><span>'+esc(clube(p.pre.c).n)+'</span></div><div class="card-b hint">'+
+      'Assinado. Ele joga a última temporada no <b style="color:var(--tx)">'+esc(c.n)+'</b> e se apresenta ao <b style="color:var(--tx)">'+esc(clube(p.pre.c).n)+'</b> na virada, como '+stNome(p.pre.status)+'.</div></div>';
+  }else if(podePre(p)){
+    var pres=S.pres&&S.pres[p.id];
+    h+='<div class="card"><div class="card-h"><h2>Pré-contrato</h2><span>'+(p.ct.ate<=S.temp?'contrato vencido':'último ano')+'</span></div>';
+    if(!pres)h+='<div class="card-b"><p class="hint" style="margin:0 0 9px">'+(p.ct.ate<=S.temp?'O contrato acabou: ele pode assinar de graça com qualquer clube agora. Se nada for resolvido nesta janela, ele sai pelo que aparecer, sem comissão para você.':'No último ano ele pode assinar de graça com outro clube e mudar na virada. O '+esc(c.n)+' não recebe nada e costuma encostar quem vai embora.')+
+      ' O dinheiro da transferência vira luvas, e a sua comissão sai delas.'+(p.dir?' <b class="neg">Seus '+Math.round(p.dir.pct*100)+'% dos direitos não rendem nada num pré-contrato.</b>':'')+'</p>'+
+      '<button class="btn sec" data-buscapre="'+p.id+'">Ouvir clubes interessados</button></div>';
+    else if(!pres.length)h+='<div class="card-b hint">Nenhum clube quis nesta janela.</div>';
+    else pres.forEach(function(o,i){
+      var cc=clube(o.c);
+      h+='<div class="ofr"><div class="ofr-top">'+escudo(cc,30)+'<div class="nm"><b>'+esc(cc.n)+'</b><span>'+LIGAS[divDe(o.c)].n+' · '+o.anos+' anos · de graça</span></div></div>'+
+        '<div class="ofr-nums"><div><span>salário</span><b>'+din(o.sal).replace('R$ ','')+'</b></div><div><span>luvas</span><b>'+din(o.luvas).replace('R$ ','')+'</b></div>'+
+        '<div><span>sua comissão</span><b class="pos">'+din(comPre(o)).replace('R$ ','')+'</b></div></div>'+
+        '<div class="ofr-chips"><span class="tg '+(stIdx(o.status)>=2?'ok':(stIdx(o.status)<1?'bad':''))+'">'+stNome(o.status)+'</span></div>'+
+        '<div class="ofr-act"><button class="btn" data-pre="'+p.id+':'+i+'">Assinar pré-contrato</button></div></div>';
+    });
+    h+='</div>';
+  }
+  if(!p.pre&&!p.emprest){
+    var pd=p.dir?p.dir.pct:0;
+    h+='<div class="card"><div class="card-h"><h2>Direitos econômicos</h2><span>'+Math.round(pd*100)+'% seus</span></div><div class="card-b">'+
+      '<p class="hint" style="margin:0 0 9px">Compre uma fatia dos direitos dele ao '+esc(c.n)+'. Na próxima venda você recebe essa fatia do valor da transferência. Pré-contrato e aposentadoria não pagam nada; se ele sair da agência, você revende por 80% do valor.</p>'+
+      (pd>=0.3?'<p class="hint pos" style="margin:0">Você tem o máximo: 30%.</p>':
+        '<button class="btn sec" data-dir="'+p.id+'"'+(precoDir(p)>S.caixa?' disabled':'')+'>Comprar 10% · '+din(precoDir(p))+'</button>')+
+      '</div></div>';
   }
   if(p.emprest){
     h+='<div class="card"><div class="card-h"><h2>Emprestado</h2><span>'+esc(c.n)+'</span></div><div class="card-b hint">'+
       'Joga pelo <b style="color:var(--tx)">'+esc(c.n)+'</b> nesta temporada e volta ao <b style="color:var(--tx)">'+esc(clube(p.emprest.de).n)+'</b> na virada. '+
       'Enquanto isso não recebe propostas de compra; o contrato se renova com o '+esc(clube(p.emprest.de).n)+' quando ele voltar.</div></div>';
+  }else if(p.pre){
   }else if(!neg||neg.id!==p.id){
     h+='<button class="btn sec" data-abrirneg="'+p.id+'" style="margin-bottom:11px">Negociar contrato com o '+esc(c.n)+'</button>';
   }else{
@@ -2192,6 +2465,14 @@ function abrirRel(){
         j.mesa.map(function(x){return '<div class="i-sub" style="margin:0 0 5px"><span>'+esc(x.n)+'</span><span class="mut">'+esc(x.m)+'</span></div>';}).join(''):'')+
       '</div></div>';
   }
+  if(b.copa){
+    var cp=b.copa;
+    h+='<div class="card copa"><div class="card-h"><h2>Copa do Mundo</h2><span>'+(cp.campeao?'🏆 Brasil campeão':'Brasil eliminado')+'</span></div><div class="card-b">'+
+      (cp.conv.length?'<table><tr><th>Convocado</th><th class="r">J</th><th class="r">Nota</th></tr>'+
+        cp.conv.map(function(x){return '<tr><td>'+esc(x.n)+(x.craque?' <span class="tg top" style="font-size:10px">craque da Copa</span>':'')+'</td><td class="r">'+x.j+'</td><td class="r">'+n2(x.nota)+'</td></tr>';}).join('')+'</table>':
+        '<p class="hint" style="margin:0">Nenhum cliente seu foi convocado.</p>')+
+      (cp.fora.length?'<p class="hint" style="margin:8px 0 0">Ficaram fora e sentiram: '+cp.fora.map(esc).join(', ')+'.</p>':'')+'</div></div>';
+  }
   if(b.metas&&b.metas.length){
     h+='<div class="card"><div class="card-h"><h2>Metas</h2><span>'+b.metas.filter(function(m){return m.ok;}).length+' de '+b.metas.length+'</span></div><div class="card-b">'+
       b.metas.map(function(m){return '<div class="i-sub" style="margin:0 0 6px"><span>'+(m.ok?'<b class="pos">✓</b> ':'<b class="neg">✕</b> ')+esc(m.txt)+'</span><span class="'+(m.ok?'pos':'mut')+'">'+(m.ok?'+'+din(m.cx):'—')+'</span></div>';}).join('')+'</div></div>';
@@ -2199,6 +2480,10 @@ function abrirRel(){
   if(b.equipe&&b.equipe.length){
     h+='<div class="card"><div class="card-h"><h2>Sua equipe</h2><span>'+b.equipe.length+' assunto'+(b.equipe.length>1?'s':'')+'</span></div><div class="card-b">'+
       b.equipe.map(function(e){return '<div class="nw '+(e.k||'')+'">'+e.t+'</div>';}).join('')+'</div></div>';
+  }
+  if(b.rivais&&b.rivais.length){
+    h+='<div class="card"><div class="card-h"><h2>Mercado das rivais</h2></div><div class="card-b">'+
+      b.rivais.map(function(e){return '<div class="nw">'+e.t+'</div>';}).join('')+'</div></div>';
   }
   if(b.evs.length){
     h+='<div class="card"><div class="card-h"><h2>O que aconteceu</h2></div><div class="card-b">'+
@@ -2208,6 +2493,68 @@ function abrirRel(){
   $('#sheet-b').innerHTML=h;
   $('#sheet').classList.add('on');
   aberto=null;relAberto=true;
+}
+
+/* =================== backup =================== */
+function backupTexto(){return JSON.stringify({app:'agente',v:3,em:new Date().toISOString().slice(0,10),save:S});}
+function validarSave(o){
+  if(!o||!o.temp||!o.div||o.div.length!==MUNDO.length||!o.clientes||!o.pool||!o.ciclo)return null;
+  return o;
+}
+function lerBackup(txt){
+  txt=(txt||'').trim();var o=null;
+  try{o=JSON.parse(txt);}catch(e){try{o=JSON.parse(decodeURIComponent(escape(atob(txt))));}catch(e2){o=null;}}
+  if(o&&o.app==='agente')o=o.save;
+  return validarSave(o);
+}
+function abrirImport(){
+  $('#sheet-t').textContent='Importar carreira';
+  $('#sheet-b').innerHTML='<p class="lead" style="margin-top:0">Escolha o arquivo do backup ou cole o código copiado. A carreira importada <b>substitui</b> a que está neste aparelho.</p>'+
+    '<input type="file" id="imp-arq" accept=".json,application/json,text/plain" style="margin:6px 0 12px;color:var(--mut)">'+
+    '<textarea id="imp-txt" rows="6" placeholder="ou cole o código aqui" style="width:100%;padding:10px;border-radius:8px;background:var(--sur);border:1px solid var(--line2);color:var(--tx);font:12px/1.4 ui-monospace,monospace"></textarea>'+
+    '<button class="btn" id="btn-impok" style="margin-top:10px">Importar</button><button class="btn sec" id="btn-impfecha">Cancelar</button>';
+  $('#sheet').classList.add('on');aberto=null;relAberto=true;
+  $('#imp-arq').addEventListener('change',function(e){
+    var fl=e.target.files&&e.target.files[0];if(!fl)return;
+    var rd=new FileReader();rd.onload=function(){$('#imp-txt').value=rd.result;};rd.readAsText(fl);
+  });
+}
+function backupClique(id){
+  if(id==='btn-impintro'){abrirImport();return;}
+  if(id==='btn-impfecha'){fecharSheet();if(S)render();return;}
+  if(id==='btn-impok'){
+    var o=lerBackup($('#imp-txt').value);
+    if(!o){toast('Não reconheci esse backup. Confira se copiou o código inteiro.');return;}
+    if(!confirm('Substituir a carreira deste aparelho pela importada (temporada '+o.temp+', '+o.clientes.length+' clientes)?'))return;
+    try{localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast('Não consegui gravar no aparelho.');return;}
+    S=carregar();fecharSheet();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();
+    toast('Carreira importada: temporada '+S.temp+'.');return;
+  }
+  if(!S)return;
+  if(id==='btn-exp'){
+    var nome='agente-'+String(S.nome||'carreira').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-temp'+S.temp+'.json';
+    try{
+      var bl=new Blob([backupTexto()],{type:'application/json'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(bl);a.download=nome;document.body.appendChild(a);a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+      toast('Backup baixado: '+nome);
+    }catch(e){toast('Não consegui baixar. Use "Copiar código".');}
+    return;
+  }
+  if(id==='btn-copiar'){
+    var cod=btoa(unescape(encodeURIComponent(backupTexto())));
+    var ok=function(){toast('Código copiado. Guarde em algum lugar (notas, e-mail).');};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(cod).then(ok,function(){prompt('Copie o código:',cod);});
+    else prompt('Copie o código:',cod);
+  }
+}
+function vBackup(){
+  var kb=Math.round(backupTexto().length/1024);
+  return '<div class="card"><div class="card-h"><h2>Backup da carreira</h2><span>'+kb+' KB</span></div><div class="card-b">'+
+    '<p class="hint" style="margin:0 0 10px">A carreira fica só neste aparelho. Se limpar os dados do app ou trocar de celular, ela some. Faça um backup de vez em quando.</p>'+
+    '<button class="btn" id="btn-exp">Baixar arquivo de backup</button>'+
+    '<button class="btn sec" id="btn-copiar">Copiar código</button>'+
+    '<button class="btn sec" id="btn-impintro">Importar um backup</button></div></div>';
 }
 
 /* =================== save =================== */
@@ -2224,16 +2571,23 @@ function carregar(){
       if(r.ano===undefined){r.ano=RIVAL_ANO[i%RIVAL_ANO.length]*Math.pow(1.21,o.temp-1);r.g=1.21;}
       if(typeof r.forca!=='number'||r.forca>2)r.forca=RIVAL_FORCA[i%RIVAL_FORCA.length];
     });
+    if(!o.dif)o.dif='normal';
     return o;
   }catch(e){return null;}
 }
 
 /* =================== eventos =================== */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-ev],#btn-versrel,#btn-vender,[data-craque],[data-irrank],[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
+  var t=ev.target.closest('[data-difn],#btn-impintro,#btn-impok,#btn-impfecha,#btn-exp,#btn-copiar,[data-buscapre],[data-pre],[data-dir],[data-acad],[data-ev],#btn-versrel,#btn-vender,[data-craque],[data-irrank],[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
   if(!t)return;
-  if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
   var d=t.dataset;
+  if(d.difn){
+    difEscolhida=d.difn;
+    document.querySelectorAll('#seg-dif button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.difn===difEscolhida?'true':'false');});
+    $('#dif-d').textContent=DIF[difEscolhida].d;return;
+  }
+  if(t.id==='btn-impintro'||t.id==='btn-impok'||t.id==='btn-impfecha'||t.id==='btn-exp'||t.id==='btn-copiar'){backupClique(t.id);return;}
+  if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
   if(d.a){scrollPos[aba]=window.scrollY;aba=d.a;render();return;}
   if(d.se){subEsc=d.se;render();return;}
   if(d.fa){fichaAba=d.fa;renderSheet();return;}
@@ -2291,6 +2645,7 @@ document.addEventListener('click',function(ev){
   if(d.pn){aberto=+d.pn;fichaAba='neg';neg=null;aval=null;renderSheet();return;}
   if(d.pren){
     var pj0=porId(+d.pren);
+    if(pj0&&pj0.pre){toast(esc(pj0.nome)+' já assinou pré-contrato com o '+esc(clube(pj0.pre.c).n)+'.');return;}
     if(pj0&&pj0.emprest){toast(esc(pj0.nome)+' está emprestado. A renovação é com o '+esc(clube(pj0.emprest.de).n)+', quando ele voltar.');return;}
     if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg={id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
     return;
@@ -2371,7 +2726,7 @@ document.addEventListener('click',function(ev){
     if(pj5&&of5){var c5=fecharEmprestimo(pj5,of5);delete S.emps[pj5.id];toast('Emprestado. Comissão de '+din(c5)+'.');}
     render();return;
   }
-  if(d.abrirneg){var pn=porId(+d.abrirneg);if(pn&&!pn.emprest)neg={id:pn.id,prop:propostaBase(pn)};render();return;}
+  if(d.abrirneg){var pn=porId(+d.abrirneg);if(pn&&!pn.emprest&&!pn.pre)neg={id:pn.id,prop:propostaBase(pn)};render();return;}
   if(d.neg){
     if(d.neg==='fechar'){neg=null;render();return;}
     var pn2=porId(neg.id),pr=neg.prop,pp2=d.neg.split(':'),sinal=pp2[1]==='+'?1:-1;
@@ -2428,6 +2783,30 @@ document.addEventListener('click',function(ev){
     if(confirm('Vender a agência por '+din(valorAgencia())+' e encerrar a carreira?')){venderAgencia();salvar();abrirVenda();}
     return;
   }
+  if(d.buscapre){
+    var pb=porId(+d.buscapre);
+    if(pb&&podePre(pb)){if(!S.pres)S.pres={};S.pres[pb.id]=gerarPre(pb);toast(S.pres[pb.id].length?S.pres[pb.id].length+' clube(s) querem ele de graça.':'Nenhum clube quis nesta janela.');}
+    render();return;
+  }
+  if(d.pre){
+    var pq2=d.pre.split(':'),pp9=porId(+pq2[0]),of9=((S.pres||{})[+pq2[0]]||[])[+pq2[1]];
+    if(pp9&&of9&&podePre(pp9)){
+      var op9=opiniaoCliente(pp9,of9);
+      if(!op9.quer&&!confirm(pp9.nome+' não gosta desse destino ('+op9.motivos.join(', ')+'). Assinar mesmo assim? Custa 12 de confiança.'))return;
+      if(!op9.quer)mexeConf(pp9,-12,'você forçou o pré-contrato com o '+clube(of9.c).n);
+      var c9=fecharPre(pp9,of9);toast('Pré-contrato assinado. Comissão de '+din(c9)+'.');
+    }
+    render();return;
+  }
+  if(d.dir){var pd2=porId(+d.dir);if(pd2)toast(comprarDir(pd2).m);render();return;}
+  if(d.acad){
+    var la2=nivAcad(),pa2=ACAD[la2];
+    if(pa2&&S.escr>=2&&pa2.c<=S.caixa&&!S.obras.some(function(o){return o.tipo==='acad';})){
+      S.caixa-=pa2.c;S.obras.push({tipo:'acad',alvo:la2+1,restam:pa2.t,nome:'Academia'});
+      S.noticias.push({t:'Academia em obra: pronta em '+pa2.t+' temporadas.',k:''});
+    }
+    render();return;
+  }
   if(d.ev){
     var pe2=d.ev.split(':'),ev2=S.eventos&&S.eventos[+pe2[0]];
     if(ev2){S.eventos.splice(+pe2[0],1);var r7=aplicarEvento(ev2,+pe2[1],false);toast(r7||'Feito.');}
@@ -2453,7 +2832,7 @@ document.addEventListener('click',function(ev){
   }
   if(t.id==='btn-novo'){
     var el=$('#nome-esc'),nm=el&&el.value?el.value.trim().slice(0,28):'';
-    novoJogo(nm||'Sua agência');$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();return;}
+    novoJogo(nm||'Sua agência',difEscolhida);$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();return;}
   if(t.id==='btn-cont'){S=carregar();if(!S.metas){gerarMetas();S.eventos=[];}$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();if(S.fim)abrirRel();return;}
 });
 
