@@ -82,8 +82,8 @@ nav .badge{display:inline-block;min-width:16px;padding:0 4px;background:var(--ne
 .i-val{font-size:15px;font-weight:650;white-space:nowrap}
 .i-sub{font-size:12px;color:var(--mut);margin-top:3px;display:flex;justify-content:space-between;gap:10px}
 .stat{display:flex;gap:14px;margin-top:7px}
-.stat div{font-size:10.5px;color:var(--mut)}
-.stat b{display:block;font-size:14px;font-weight:600;color:var(--tx)}
+.stat div{font-size:10.5px;color:var(--mut);min-width:0}
+.stat b{display:block;font-size:14px;font-weight:600;color:var(--tx);white-space:nowrap}
 .trk{position:relative;height:5px;background:var(--sur3);border-radius:3px;overflow:hidden}
 .trk .bd{position:absolute;top:0;bottom:0;background:var(--ac-d)}
 .trk .mk{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--ac)}
@@ -138,6 +138,57 @@ tr.eu td{color:var(--ac);font-weight:600}
 .ofr-act .btn{flex:1;padding:10px;font-size:14px;margin:0}
 .lnk{font-size:13px;color:var(--mut);padding:8px 6px;text-decoration:underline;text-underline-offset:3px}
 h1{font-size:23px;margin:0 0 6px;font-weight:650;letter-spacing:-.3px}
+
+/* barra de navegacao com icones */
+nav button svg{display:block;width:21px;height:21px;margin:0 auto 2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button{position:relative}
+nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
+
+/* controle segmentado (diretriz) */
+.seg{display:flex;background:var(--sur2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;margin-top:9px}
+.seg button{flex:1;min-width:0;font-size:12.5px;padding:7px 2px;border-radius:6px;color:var(--mut);white-space:nowrap}
+.card-b>.seg:first-child{margin-top:0}
+.seg button[aria-pressed="true"]{background:var(--ac);color:#04140d;font-weight:650}
+
+/* termometro do mercado */
+.termo{display:flex;gap:3px;margin:8px 0 5px}
+.termo i{flex:1;height:7px;border-radius:4px;background:var(--sur3)}
+.termo i.on{background:var(--c)}
+.termo-l{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mut2)}
+.termo-l b{color:var(--tx);font-weight:600}
+
+/* corrida das agencias */
+.corrida{display:flex;align-items:center;gap:12px}
+.corrida .pos-n{font-size:30px;font-weight:700;line-height:1;letter-spacing:-.5px;min-width:48px}
+.corrida .pos-n small{font-size:14px;color:var(--mut);font-weight:500}
+
+/* primeiros passos */
+.passo{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:13.5px}
+.passo i{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:var(--mut)}
+.passo.ok i{background:var(--ac);border-color:var(--ac);color:#04140d}
+.passo.ok span{color:var(--mut);text-decoration:line-through}
+
+/* mesa de renovacao: linha com - e + */
+.step{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step .v{flex:1;min-width:0}
+.step .v span{display:block;font-size:11px;color:var(--mut)}
+.step .v b{font-size:14.5px;font-weight:600}
+.step button{width:42px;height:38px;border-radius:8px;background:var(--sur3);border:1px solid var(--line2);font-size:19px;font-weight:600;line-height:1}
+.step button:disabled{opacity:.35}
+.chance{height:8px;border-radius:5px;background:var(--sur3);overflow:hidden;margin:4px 0 12px}
+.chance div{height:100%;border-radius:5px;transition:width .2s}
+
+/* destaque do relatorio */
+.hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:11px}
+.hero div{background:var(--sur);border:1px solid var(--line);border-radius:9px;padding:10px 10px 9px;min-width:0}
+.hero span{display:block;font-size:10.5px;color:var(--mut);margin-bottom:3px}
+.hero b{font-size:17px;font-weight:700;white-space:nowrap;letter-spacing:-.2px}
+.hero small{display:block;font-size:11px;margin-top:2px}
+
+.sheet.on{animation:subir .2s ease-out}
+@keyframes subir{from{transform:translateY(18px);opacity:.3}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet.on{animation:none}}
 .lead{font-size:14.5px;color:var(--mut);line-height:1.55}
 .lead b{color:var(--tx)}
 </style>
@@ -165,7 +216,7 @@ h1{font-size:23px;margin:0 0 6px;font-weight:650;letter-spacing:-.3px}
 <div class="sheet on" id="intro"><div class="sheet-b" style="padding-top:34px">
   <div style="font-size:11.5px;color:var(--mut);letter-spacing:.05em">BNF GAMES</div>
   <h1 style="font-size:34px;margin-top:4px">Agente</h1>
-  <p class="lead">Empresário de jogador. Mesa na sala de casa, um cliente ruim e R$ 120 mil no bolso.</p>
+  <p class="lead">Empresário de jogador. Mesa na sala de casa, um cliente ruim e R$ 180 mil no bolso.</p>
   <p class="lead">Seu escritório define quem chega até você: quantos nomes por temporada, até que liga o seu alcance vai e quantas sondagens cabem na janela. Sede maior, mesa melhor — e sede leva temporada para ficar de pé.</p>
   <p class="lead">Do jogador você vê uma <b>faixa</b>, não um número. Sondagem aperta a faixa. Assinar sem sondar é apostar.</p>
   <p class="lead">A temporada roda de uma vez. Depois vem o relatório e a janela: propostas de clubes pelos seus clientes, mesa de renovação com o clube atual — salário, duração e status no elenco — e o cliente cobrando o que você prometeu.</p>
@@ -390,6 +441,9 @@ function limSond(){return escr().sond+niv('olh')*2;}
 function alcance(){return escr().alc+niv('olh')*10;}
 
 var AGENCIAS=['Prado & Associados','Gol Sports','Vieira Talentos','MRC Management','Estrela Agência','Fair Play Brasil'];
+/* faturamento anual inicial de cada rival (R$ mi); crescem ~20% por temporada */
+var RIVAL_ANO=[0.05,0.09,0.15,0.24,0.38,0.6];
+function rivalDe(n){for(var i=0;i<S.rivais.length;i++)if(S.rivais[i].n===n)return S.rivais[i];return null;}
 var NOMES=['Kaiquinho','Vitinho','Deivid','Ruan','Peterson','Jhonatan','Wesley','Cauã','Yuri','Nilsinho','Everaldo','Maicon','Léo Fumaça','Tiaguinho','Robson','Danilinho','Cleiton','Vanderson','Igor','Marcelinho','Adriel','Juan Pablo','Zé Rafael','Bruninho','Weverton','Gilmar','Alison','Paulinho','Rodriguinho','Kauê','Ítalo','Erick','Denilson','Matheusinho','Jefinho','Gabriel Melo','Luan','Otávio','Serginho','Hélio','Nicolas','Vinicinho','Emerson','Carlinhos','Rafinha','Joãozinho','Douglas','Wanderson','Ederson','Micael'];
 
 /* ---------- ciclo de mercado ---------- */
@@ -535,7 +589,7 @@ function darPremios(p,t,meu){
     p.fama=cl(p.fama+pr.fama*rnd(0.7,1.2),18,99);
     if(meu){mexeConf(p,pr.conf,'ganhou '+pr.n.toLowerCase());S.rep=cl(S.rep+pr.rep,0,100);}
     ganhos.push(pr.n);
-    S.evs.push({t:'<b>'+esc(p.nome)+'</b> levou o prêmio de '+pr.n+' d'+(lg.n.indexOf('Liga')===0?'a ':'o ')+lg.n+'.',k:'big'});
+    (meu?S.evs:S.noticias).push({t:'<b>'+esc(p.nome)+'</b> levou o prêmio de '+pr.n+' d'+(lg.n.indexOf('Liga')===0?'a ':'o ')+lg.n+'.',k:'big'});
   });
   return ganhos;
 }
@@ -574,6 +628,7 @@ function assinar(p){
 }
 
 function segurarCliente(p){
+  p.segurou=S.temp;
   var ch=cl(0.35+p.conf/160+S.rep/220+niv('psi')*0.09,0.1,0.94);
   if(Math.random()<ch){
     mexeConf(p,ri(5,12),'você segurou ele contra a '+p.assedio.ag);
@@ -665,7 +720,7 @@ function fecharTransfer(p,of,futuro){
     p.sellon=0;
   }
   if(futuro){com*=0.45;p.sellon=(p.sellon||0)+0.15;}
-  p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;
+  p.clube=of.c;p.ct={sal:of.sal,ate:S.temp+of.anos};p.status=of.status;p.emprest=null;
   mexeConf(p,stIdx(of.status)>=2?11:-6,stIdx(of.status)>=2?'saiu para jogar no '+clube(of.c).n:'foi para o banco do '+clube(of.c).n);
   if(of.sal>p.ct.sal*1.2)mexeConf(p,4,'ganhou bem mais de salário');
   p.fama=cl(p.fama+cl((LIGAS[divDe(of.c)].rep-25)*0.08,0,5),18,99);
@@ -693,7 +748,7 @@ function gerarEmprestimos(p){
 }
 function fecharEmprestimo(p,of){
   var com=of.sal*taxaCom()*0.6;
-  p.emprest={de:p.clube,volta:S.temp+1};
+  p.emprest={de:p.clube,volta:S.temp};
   p.clube=of.c;p.status=of.status;
   mexeConf(p,stIdx(of.status)>=2?9:2,'foi emprestado ao '+clube(of.c).n+' para jogar');
   receber(com,'emprest',p);
@@ -702,11 +757,16 @@ function fecharEmprestimo(p,of){
 }
 
 var PLANOS=[
- {id:'segurar',n:'Segurar',d:'recusa tudo; ele fica onde está'},
- {id:'ouvir',n:'Ouvir',d:'as propostas vêm para a sua mesa'},
- {id:'sair',n:'Buscar saída',d:'fecha a melhor proposta pelo dinheiro'},
- {id:'minutos',n:'Buscar minutos',d:'fecha a que der mais espaço no elenco'}
+ {id:'segurar',n:'Segurar',c:'Segurar',d:'recusa tudo; ele fica onde está'},
+ {id:'ouvir',n:'Ouvir',c:'Ouvir',d:'as propostas vêm para a sua mesa'},
+ {id:'sair',n:'Buscar saída',c:'Vender',d:'fecha a melhor proposta pelo dinheiro'},
+ {id:'minutos',n:'Buscar minutos',c:'Minutos',d:'fecha a que der mais espaço no elenco'}
 ];
+function segPlano(p){
+  return '<div class="seg" role="group" aria-label="Diretriz na janela">'+PLANOS.map(function(pl){
+    return '<button data-plano="'+p.id+':'+pl.id+'" title="'+pl.n+': '+pl.d+'"'+(planoDe(p)===pl.id?' aria-pressed="true"':'')+'>'+pl.c+'</button>';
+  }).join('')+'</div>';
+}
 function planoDe(p){return p.plano||S.planoPad||'ouvir';}
 function foraDaCurva(p,of){return of.preco>=valor(p)*1.6||of.sal>=p.ct.sal*2;}
 function melhorPara(p,plano){
@@ -765,8 +825,23 @@ function gerarExigencia(p){
   var mer=statusMerecido(p);
   if(stIdx(p.status)<stIdx(mer)-1&&p.idade>=19)return {t:'jogar',txt:'quer ser pelo menos '+stNome(mer)+' ou sair do clube'};
   if(p.ct.sal<salarioJusto(p)*0.72)return {t:'salario',txt:'ganha bem menos do que vale e quer contrato novo'};
-  if(p.fama>62&&LIGAS[divDe(p.clube)].rep<40&&p.idade<=26)return {t:'subir',txt:'quer um clube maior, de liga mais forte'};
+  if(p.fama>62&&LIGAS[divDe(p.clube)].rep<40&&p.idade<=26)return {t:'subir',txt:'quer um clube maior, de liga mais forte',clube:p.clube};
   return null;
+}
+/* a exigencia foi atendida durante a janela? (antes de a temporada rodar) */
+function exigResolvida(p){
+  if(!p.exig)return true;
+  if(p.exig.t==='jogar')return stIdx(p.status)>=stIdx(statusMerecido(p))-1||!!p.emprest;
+  if(p.exig.t==='salario')return p.ct.sal>=salarioJusto(p)*0.9;
+  if(p.exig.t==='subir')return p.exig.clube!==p.clube;
+  return false;
+}
+function conversar(p){
+  if(p.conversou===S.temp)return {ok:false,m:'Vocês já conversaram nesta janela. Agora ele quer ver ação.'};
+  p.conversou=S.temp;
+  var v=mexeConf(p,ri(3,9)+niv('psi')*2,p.exig?'você conversou e prometeu resolver':'você conversou com ele');
+  if(p.exig){p.promessa=S.temp;return {ok:true,m:'Ele topou esperar, mas cobra a solução antes da próxima temporada.'};}
+  return {ok:true,m:'Conversa boa. Confiança '+(v>=0?'+':'')+v+'.'};
 }
 function atenderExigencia(p){
   if(!p.exig)return;
@@ -794,6 +869,7 @@ function campanha(){
 }
 function rodarTemporada(){
   S.evs=[];
+  var posAnt=posicao(),caixaAnt=S.caixa;
   var det=[],rel=[];
   todos().forEach(function(p){
     var c=clube(p.clube),ref=refDiv(divDe(p.clube)),antes=p.nv;
@@ -821,7 +897,7 @@ function rodarTemporada(){
     if(Math.random()<0.022+cl((p.idade-27)*0.006,0,0.05)){
       grave=true;j=Math.round(j*rnd(0.05,0.3));min=Math.round(min*0.2);g=Math.round(g*0.2);
       p.nv=cl(p.nv-ri(1,4),20,99);p.fama=cl(p.fama-rnd(3,9),18,99);p.lesaoGrave=S.temp;
-      S.evs.push({t:'<b>'+esc(p.nome)+'</b> sofreu uma lesão grave e perdeu quase toda a temporada.',k:'bad'});
+      if(p.agencia==='VOCÊ')S.evs.push({t:'<b>'+esc(p.nome)+'</b> sofreu uma lesão grave e perdeu quase toda a temporada.',k:'bad'});
     }
     p.t={j:j,min:min,g:g,nota:nota,grave:grave};
     var prem=darPremios(p,p.t,p.agencia==='VOCÊ');
@@ -835,6 +911,7 @@ function rodarTemporada(){
     if(stIdx(mer)>stIdx(p.status)&&Math.random()<0.55)p.status=STATUS[Math.min(3,stIdx(p.status)+1)][0];
     else if(stIdx(mer)<stIdx(p.status)&&Math.random()<0.5)p.status=STATUS[Math.max(0,stIdx(p.status)-1)][0];
     if(meu){
+      if(p.promessa===S.temp&&p.exig&&!exigResolvida(p))mexeConf(p,-8,'você prometeu e não resolveu');
       mexeConf(p,(m>0.7?7:(m>0.4?2:-9))+niv('psi'),m>0.7?'jogou a temporada inteira':(m>0.4?'jogou razoavelmente':'passou a temporada no banco'));
       p.exig=gerarExigencia(p);atenderExigencia(p);
       if(p.exig)S.evs.push({t:'<b>'+esc(p.nome)+'</b> '+p.exig.txt+'.',k:'bad'});
@@ -897,10 +974,11 @@ function rodarTemporada(){
   S.clientes.slice().forEach(function(p){
     var risco=cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04;
     if(Math.random()<risco){
-      var ag=pick(AGENCIAS);p.agencia=ag;
+      var ag=p.assedio?p.assedio.ag:pick(AGENCIAS);p.agencia=ag;
+      var rv=rivalDe(ag);if(rv)rv.ano+=(p.ct.sal*0.07+imagemDe(p)*0.2);
       S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
       S.exCli.push(p);perdidos.push(p);
-      S.evs.push({t:'<b>'+esc(p.nome)+'</b> cansou de esperar e assinou com a '+(p.assedio?p.assedio.ag:ag)+'.',k:'bad'});
+      S.evs.push({t:'<b>'+esc(p.nome)+'</b> cansou de esperar e assinou com a '+ag+'.',k:'bad'});
       S.rep=cl(S.rep-0.6,0,100);
     }
   });
@@ -911,12 +989,17 @@ function rodarTemporada(){
   /* propostas pelos seus clientes */
   S.props={};
   S.clientes.forEach(function(p){
+    if(p.emprest)return;
     var of=gerarPropostas(p);
     if(of.length)S.props[p.id]=of;
   });
   S.janela=resolverJanela();
   /* rivais */
-  S.rivais.forEach(function(r){r.fat+=Math.max(0.04,r.forca*rnd(0.35,1.2)*(1+S.temp*0.09));});
+  S.rivais.forEach(function(r){
+    r.ano=r.ano*cl(r.g+gs()*0.05,1.08,1.36)*S.ciclo.v/(S.ciclo.ant||1);
+    r.fat+=r.ano;
+  });
+  S.ciclo.ant=S.ciclo.v;
   S.hist.push({t:S.temp,cx:S.caixa,rec:S.recTemp,cli:S.clientes.length,val:carteira(),ciclo:S.ciclo.v});
   checarMarcos();
   S.evs.forEach(function(e){S.noticias.push(e);});
@@ -924,8 +1007,9 @@ function rodarTemporada(){
   if(S.hist.length>30)S.hist=S.hist.slice(-30);
   if(S.exCli.length>14)S.exCli=S.exCli.slice(-14);
   S.rel={t:S.temp,det:det,rel:rel,evs:S.evs,rec:S.recTemp,caixa:S.caixa,
-         props:Object.keys(S.props).length,perdidos:perdidos.length,janela:S.janela};
-  S.recTemp=0;S.temp++;S.sondUsadas=0;
+         props:Object.keys(S.props).length,perdidos:perdidos.length,janela:S.janela,
+         pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt};
+  S.recTemp=0;S.temp++;S.sondUsadas=0;S.emps={};S.renovTent={};
   if(S.caixa<-0.2)S.fim='O escritório quebrou: '+din(S.caixa)+' no vermelho.';
   else if(!S.clientes.length&&S.caixa<0.02)S.fim='Sem clientes e sem caixa para ir atrás de outro.';
   try{var r=parseFloat(localStorage.getItem('agente:rec')||'0');if(S.receita>r)localStorage.setItem('agente:rec',S.receita.toFixed(2));}catch(e){}
@@ -967,9 +1051,9 @@ function novoJogo(nome){
      div:MUNDO.map(function(x){return x.div0;}),ref:{},
      clientes:[],exCli:[],pool:[],obras:[],melh:{},noticias:[],hist:[],evs:[],
      props:{},rivais:[],sondUsadas:0,fim:null,rel:null,marcos:{},rec:{},custoAcum:0,planoPad:'ouvir',
-     ciclo:{v:1.0,mom:0,f:'normal'}};
+     ciclo:{v:1.0,mom:0,f:'normal'},tut:{}};
   calcularRefs();
-  AGENCIAS.forEach(function(n,i){S.rivais.push({n:n,forca:0.5+i*0.32,fat:0.3+i*0.6});});
+  AGENCIAS.forEach(function(n,i){var a=RIVAL_ANO[i];S.rivais.push({n:n,ano:a,g:rnd(1.19,1.24),fat:a*3});});
   for(var i=0;i<escr().nomes;i++)S.pool.push(gerarJogador());
   var cand=S.pool.filter(function(p){return !p.agencia;});
   var p0=cand.length?pick(cand):S.pool[0];
@@ -1008,7 +1092,14 @@ function pendencias(){
 }
 
 /* =================== render =================== */
-var ABAS=[['mesa','Mesa','▦'],['cli','Clientes','◍'],['nom','Nomes','◎'],['ana','Análise','◔'],['esc','Escritório','◆']];
+var ICO={
+  mesa:'<path d="M3 9h18M5 9v10M19 9v10M8 9V6h8v3"/>',
+  cli:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6M17.5 14.4c1.6.7 2.6 2.3 3 4.6"/>',
+  nom:'<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/>',
+  ana:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  esc:'<path d="M4 20V6l8-3 8 3v14M2 20h20M9 20v-5h6v5M8 9h.01M12 9h.01M16 9h.01M8 12.5h.01M12 12.5h.01M16 12.5h.01"/>'
+};
+var ABAS=[['mesa','Mesa'],['cli','Clientes'],['nom','Nomes'],['ana','Análise'],['esc','Escritório']];
 function render(){
   if(!S)return;
   salvar();
@@ -1021,7 +1112,7 @@ function render(){
   $('#pat-l').innerHTML='<b style="font-weight:600;font-size:12.5px">'+esc(S.nome||'Sua agência')+'</b> <span style="color:var(--mut2)">· temporada '+S.temp+' · mercado '+S.ciclo.f+'</span>';
   $('#nav').innerHTML=ABAS.map(function(a){
     var bd=(a[0]==='mesa'&&pendencias())?'<span class="badge">'+pendencias()+'</span>':'';
-    return '<button data-a="'+a[0]+'"'+(aba===a[0]?' aria-current="true"':'')+'><b>'+a[2]+'</b>'+a[1]+bd+'</button>';
+    return '<button data-a="'+a[0]+'"'+(aba===a[0]?' aria-current="true"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICO[a[0]]+'</svg>'+a[1]+bd+'</button>';
   }).join('');
   var m=$('#main');
   if(renderizada===aba)scrollPos[aba]=window.scrollY;
@@ -1041,10 +1132,49 @@ function renderActbar(){
 }
 
 /* ---------- mesa ---------- */
+/* posicao no ranking de faturamento acumulado */
+function ranking(){
+  var l=S.rivais.map(function(r){return {n:r.n,f:r.fat};});
+  l.push({n:S.nome||'Sua agência',f:S.receita,eu:true});
+  return l.sort(function(a,b){return b.f-a.f;});
+}
+function posicao(){var l=ranking();for(var i=0;i<l.length;i++)if(l[i].eu)return i+1;return l.length;}
+var FASES=[['crise',0.78,'var(--neg)'],['frio',0.92,'var(--info)'],['normal',1.06,'var(--mut)'],['aquecido',1.24,'var(--warn)'],['euforia',9,'var(--ac)']];
+function vTermo(){
+  var fi=0;while(S.ciclo.v>FASES[fi][1])fi++;
+  var mom=S.ciclo.mom||0,tend=mom>0.06?'↑ esquentando':(mom<-0.06?'↓ esfriando':'→ estável');
+  var dica=fi<=1?'Bom momento para assinar: os valores estão baixos.':(fi>=3?'Bom momento para vender: os clubes estão pagando caro.':'Mercado em equilíbrio.');
+  return '<div class="card"><div class="card-b" style="padding:11px 13px">'+
+    '<div class="i-sub" style="margin:0"><span>Mercado <b style="color:var(--tx)">'+S.ciclo.f+'</b> · valores ×'+n2(S.ciclo.v)+'</span><span>'+tend+'</span></div>'+
+    '<div class="termo" style="--c:'+FASES[fi][2]+'">'+FASES.map(function(f,i){return '<i class="'+(i===fi?'on':'')+'"></i>';}).join('')+'</div>'+
+    '<div class="termo-l">'+FASES.map(function(f,i){return i===fi?'<b>'+f[0]+'</b>':'<span>'+f[0]+'</span>';}).join('')+'</div>'+
+    '<p class="hint" style="margin:8px 0 0">'+dica+' Sondagens nesta janela: <b style="color:var(--tx)">'+S.sondUsadas+'/'+limSond()+'</b>.</p>'+
+    '</div></div>';
+}
+function vCorrida(){
+  var l=ranking(),pos=posicao(),acima=pos>1?l[pos-2]:null,abaixo=l[pos]||null;
+  return '<div class="card"><div class="card-b"><div class="corrida">'+
+    '<div class="pos-n">'+pos+'º<small>/'+l.length+'</small></div>'+
+    '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+(pos===1?'A maior agência do mercado':'Corrida das agências')+'</div>'+
+    '<div class="hint">'+(acima?'Faltam <b style="color:var(--tx)">'+din(acima.f-S.receita)+'</b> para passar a '+esc(acima.n)+'.':
+      (abaixo?'Vantagem de <b class="pos">'+din(S.receita-abaixo.f)+'</b> sobre a '+esc(abaixo.n)+'.':''))+'</div></div>'+
+    '<button class="lnk" data-irrank="1">ranking</button></div></div></div>';
+}
+function vPassos(){
+  var t=S.tut;
+  if(!t||t.fim||S.temp>3)return '';
+  var ps=[[t.sond,'Sonde um nome em <b>Nomes</b>: a faixa de nível aperta e a chance de assinar sobe.'],
+          [S.clientes.length>=2,'Assine um segundo cliente. Quanto mais gente na carteira, mais comissão.'],
+          [t.dir,'Escolha a diretriz de cada cliente em <b>Clientes</b>: ela resolve a janela por você.'],
+          [S.temp>1,'Rode a temporada e leia o relatório.']];
+  var feitos=ps.filter(function(x){return x[0];}).length;
+  if(feitos===ps.length){t.fim=true;return '';}
+  return '<div class="card"><div class="card-h"><h2>Primeiros passos</h2><span>'+feitos+' de '+ps.length+'</span></div><div class="card-b" style="padding-top:6px;padding-bottom:6px">'+
+    ps.map(function(x,i){return '<div class="passo'+(x[0]?' ok':'')+'"><i>'+(x[0]?'✓':(i+1))+'</i><span>'+x[1]+'</span></div>';}).join('')+
+    '</div></div>';
+}
 function vMesa(){
-  var h='<div class="card"><div class="card-b" style="padding:10px 13px">'+
-    '<div class="i-sub" style="margin:0"><span>Mercado <b style="color:var(--tx)">'+S.ciclo.f+'</b> · valores ×'+n2(S.ciclo.v)+'</span>'+
-    '<span>sondagens '+S.sondUsadas+'/'+limSond()+'</span></div></div></div>';
+  var h=vPassos()+vTermo()+(S.temp>1?vCorrida():'');
   /* propostas resolvidas em lote, sem entrar em ficha */
   var comProp=S.clientes.filter(function(p){return (S.props[p.id]||[]).length;});
   if(comProp.length){
@@ -1125,10 +1255,7 @@ function vCli(){
       '<div>contrato<b>'+(p.ct.ate<=S.temp?'vencido':p.ct.ate)+'</b></div>'+
       '<div>confiança<b style="color:'+corConf(p.conf)+'">'+Math.round(p.conf)+'</b></div></div>'+
       (p.exig?'<div class="i-sub"><span class="neg">'+esc(p.exig.txt)+'</span><span></span></div>':'')+
-      '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px">'+
-      PLANOS.map(function(pl){
-        return '<button class="chip" data-plano="'+p.id+':'+pl.id+'"'+(planoDe(p)===pl.id?' aria-pressed="true"':'')+'>'+pl.n+'</button>';
-      }).join('')+'</div>'+
+      segPlano(p)+
       '<div class="ofr-act" style="margin-top:9px">'+
       (temProp?'<button class="btn sec" data-pn="'+p.id+'">Ver '+temProp+' proposta'+(temProp>1?'s':'')+'</button>':
        '<button class="btn sec" data-pren="'+p.id+'">'+(venc?'Renovar contrato':'Negociar contrato')+'</button>')+
@@ -1206,7 +1333,7 @@ function vAna(){
   var conc=rec>0?maior/rec:0;
   var h='<div class="card"><div class="card-h"><h2>Painel da agência</h2><span>temporada '+S.temp+'</span></div><div class="card-b">'+
     '<div class="stat" style="margin:0 0 11px">'+
-      '<div>sob representação<b>'+din(sob)+'</b></div>'+
+      '<div>carteira<b>'+din(sob)+'</b></div>'+
       '<div>receita recorrente<b class="pos">'+din(rec)+'</b></div>'+
       '<div>custo fixo<b class="neg">'+din(cus)+'</b></div>'+
       '<div>margem<b class="'+(marg>=0?'pos':'neg')+'">'+din(marg)+'</b></div>'+
@@ -1344,9 +1471,7 @@ function vMarcos(){
   return h+'</div></div>';
 }
 function vRank(){
-  var lista=S.rivais.map(function(r){return {n:r.n,f:r.fat};});
-  lista.push({n:(S.nome||'Sua agência'),f:S.receita,eu:true});
-  lista.sort(function(a,b){return b.f-a.f;});
+  var lista=ranking();
   var mediana=lista.map(function(x){return x.f;}).sort(function(a,b){return a-b;})[Math.floor(lista.length/2)];
   var h='<div class="card"><div class="card-h"><h2>Agências</h2><span>faturamento acumulado</span></div><div class="card-b"><table>'+
     '<tr><th>#</th><th>Agência</th><th class="r">Faturou</th></tr>'+
@@ -1410,9 +1535,7 @@ function fRes(p,meu,c,f,fp){
   }
   if(meu){
     h+='<div class="card"><div class="card-h"><h2>Diretriz na janela</h2><span>'+PLANOS.filter(function(x){return x.id===planoDe(p);})[0].d+'</span></div><div class="card-b">'+
-      '<div style="display:flex;gap:5px;flex-wrap:wrap">'+PLANOS.map(function(pl){
-        return '<button class="chip" data-plano="'+p.id+':'+pl.id+'"'+(planoDe(p)===pl.id?' aria-pressed="true"':'')+'>'+pl.n+'</button>';
-      }).join('')+'</div></div></div>';
+      segPlano(p)+'</div></div>';
     h+='<div class="card"><div class="card-h"><h2>Confiança</h2><span>'+nivelConf(p.conf)+'</span></div><div class="card-b">'+
       '<div class="i-sub" style="margin:0 0 4px"><span>'+Math.round(p.conf)+' de 100</span><span>sai abaixo de 35</span></div>'+
       barra(p.conf,corConf(p.conf))+'</div></div>';
@@ -1510,7 +1633,7 @@ function fNeg(p,meu,c,f,fp){
   if(p.assedio){
     h+='<div class="card"><div class="card-h"><h2>Assédio</h2><span>'+esc(p.assedio.ag)+'</span></div><div class="card-b">'+
       '<p class="hint" style="margin:0 0 9px">A <b>'+esc(p.assedio.ag)+'</b> procurou ele por fora. Enquanto isso estiver de pé, o risco de perder ele na virada sobe muito.</p>'+
-      '<button class="btn" data-seg="'+p.id+'">Sentar com ele e segurar</button></div></div>';
+      '<button class="btn" data-seg="'+p.id+'"'+(p.segurou===S.temp?' disabled':'')+'>'+(p.segurou===S.temp?'Já tentou nesta janela':'Sentar com ele e segurar')+'</button></div></div>';
   }
   var ofs=S.props[p.id];
   if(ofs&&ofs.length){
@@ -1556,31 +1679,37 @@ function fNeg(p,meu,c,f,fp){
     });
     h+='</div>';
   }else if(!p.emprest){
-    h+='<button class="btn sec" data-buscaremp="'+p.id+'">Buscar empréstimo para ele jogar</button>';
+    h+='<button class="btn sec" data-buscaremp="'+p.id+'" style="margin-bottom:11px">Buscar empréstimo para ele jogar</button>';
   }
   if(!neg||neg.id!==p.id){
-    h+='<button class="btn sec" data-abrirneg="'+p.id+'">Negociar contrato com o '+esc(c.n)+'</button>';
+    h+='<button class="btn sec" data-abrirneg="'+p.id+'" style="margin-bottom:11px">Negociar contrato com o '+esc(c.n)+'</button>';
   }else{
-    var pr=neg.prop,ch=chanceRenov(p,pr),com2=pr.luvas*0.35+pr.sal*taxaCom();
-    h+='<div class="card"><div class="card-h"><h2>Mesa com o '+esc(c.n)+'</h2><span class="'+(ch>0.55?'pos':(ch<0.3?'neg':''))+'">'+pc(ch)+' de aceite</span></div><div class="card-b">'+
-      '<div class="kv"><span>Salário pedido</span><b>'+din(pr.sal)+'/ano</b></div>'+
-      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="sal:-">−</button><button class="btn sec" data-neg="sal:+">+ salário</button></div>'+
-      '<div class="kv"><span>Status exigido</span><b>'+stNome(pr.status)+'</b></div>'+
-      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="st:-">−</button><button class="btn sec" data-neg="st:+">+ status</button></div>'+
-      '<div class="kv"><span>Duração</span><b>'+pr.anos+' temporadas</b></div>'+
-      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="an:-">−</button><button class="btn sec" data-neg="an:+">+ anos</button></div>'+
-      '<div class="kv"><span>Cláusula</span><b>'+(pr.claus?din(valorClausula(p,CLAUS[pr.claus])):'sem cláusula')+'</b></div>'+
-      '<div class="row2" style="margin:6px 0 10px"><button class="btn sec" data-neg="cl:-">−</button><button class="btn sec" data-neg="cl:+">+ cláusula</button></div>'+
-      '<div class="kv"><span>Mercado paga</span><b>'+din(salarioJusto(p))+'</b></div>'+
+    var pr=neg.prop,ch=chanceRenov(p,pr),com2=pr.luvas*0.35+pr.sal*taxaCom(),
+        tent=(S.renovTent&&S.renovTent[p.id])||0,corCh=ch>0.55?'var(--ac)':(ch<0.3?'var(--neg)':'var(--warn)');
+    var linha=function(k,rot,val,nota,min,max){
+      return '<div class="step"><div class="v"><span>'+rot+'</span><b>'+val+'</b>'+(nota?' <span style="display:inline;font-size:11.5px">'+nota+'</span>':'')+'</div>'+
+        '<button data-neg="'+k+':-" aria-label="menos '+rot+'"'+(min?' disabled':'')+'>−</button>'+
+        '<button data-neg="'+k+':+" aria-label="mais '+rot+'"'+(max?' disabled':'')+'>+</button></div>';
+    };
+    var justo=salarioJusto(p),rel=pr.sal/justo;
+    h+='<div class="card"><div class="card-h"><h2>Mesa com o '+esc(c.n)+'</h2><span>'+(3-tent)+' tentativa'+(3-tent!==1?'s':'')+'</span></div><div class="card-b">'+
+      '<div class="i-sub" style="margin:0"><span>Chance de o clube aceitar</span><b style="color:'+corCh+';font-size:15px">'+pc(ch)+'</b></div>'+
+      '<div class="chance"><div style="width:'+Math.round(ch*100)+'%;background:'+corCh+'"></div></div>'+
+      linha('sal','Salário por ano',din(pr.sal),'<span class="'+(rel>1.15?'neg':(rel<0.95?'mut':'pos'))+'">'+(rel>=1?'+':'−')+Math.round(Math.abs(rel-1)*100)+'% do mercado</span>',pr.sal<=0.03,false)+
+      linha('st','Status no elenco',stNome(pr.status),stIdx(pr.status)>stIdx(statusMerecido(p))?'<span class="neg">acima do que o clube acha justo</span>':'',stIdx(pr.status)<=0,stIdx(pr.status)>=3)+
+      linha('an','Duração',pr.anos+' temporada'+(pr.anos>1?'s':''),'',pr.anos<=1,pr.anos>=5)+
+      linha('cl','Cláusula de rescisão',pr.claus?din(valorClausula(p,CLAUS[pr.claus])):'sem cláusula',pr.claus?'<span class="mut">'+CLAUS[pr.claus]+'× o valor</span>':'',!pr.claus,pr.claus>=3)+
+      '<div class="kv" style="border-top:1px solid var(--line);margin-top:2px"><span>Mercado paga</span><b>'+din(justo)+'</b></div>'+
       '<div class="kv"><span>Clube acha justo</span><b>'+stNome(statusMerecido(p))+'</b></div>'+
       '<div class="kv"><span>Sua comissão se fechar</span><b class="pos">'+din(com2)+'</b></div>'+
-      '<button class="btn" data-prop="'+p.id+'" style="margin-top:10px">Propor ao clube</button>'+
+      '<button class="btn" data-prop="'+p.id+'" style="margin-top:10px"'+(tent>=3?' disabled':'')+'>'+(tent>=3?'O clube encerrou a conversa':'Propor ao clube')+'</button>'+
       '<button class="lnk" data-neg="fechar" style="display:block;margin:8px auto 0">Sair da mesa</button></div></div>';
   }
   h+='<div class="card" style="margin-top:11px"><div class="card-h"><h2>Com o jogador</h2><span>confiança '+Math.round(p.conf)+'</span></div><div class="card-b">'+
     (p.exig?'<p class="hint" style="margin:0 0 9px"><b class="neg">'+esc(p.nome)+' '+esc(p.exig.txt)+'.</b></p>':
       '<p class="hint" style="margin:0 0 9px">Nada pendente com ele.</p>')+
-    '<button class="btn sec" data-conv="'+p.id+'">Conversar e prometer solução</button>'+
+    '<button class="btn sec" data-conv="'+p.id+'"'+(p.conversou===S.temp?' disabled':'')+'>'+(p.conversou===S.temp?'Vocês já conversaram nesta janela':(p.exig?'Conversar e prometer solução':'Conversar com ele'))+'</button>'+
+    (p.promessa===S.temp&&p.exig?'<p class="hint wrn" style="margin:8px 0 0">Você prometeu resolver. Se a exigência seguir de pé quando a temporada rodar, ele perde 8 de confiança.</p>':'')+
     '<button class="lnk" data-resc="'+p.id+'" style="display:block;margin:10px auto 0">Encerrar a relação</button></div></div>';
   if(p.confLog&&p.confLog.length){
     h+='<div class="card"><div class="card-h"><h2>Confiança</h2><span>'+Math.round(p.conf)+' · '+nivelConf(p.conf)+'</span></div><div class="card-b">'+
@@ -1600,6 +1729,14 @@ function abrirRel(){
   $('#sheet-t').textContent=S.fim?'Fim de linha':'Relatório da temporada '+b.t;
   var h='';
   if(S.fim)h+='<h1>Acabou</h1><p class="lead">'+S.fim+'</p>';
+  if(b.pos){
+    var sb=b.posAnt-b.pos;
+    h+='<div class="hero">'+
+      '<div><span>faturou</span><b class="pos">'+din(b.rec)+'</b><small class="mut">na temporada</small></div>'+
+      '<div><span>caixa</span><b>'+din(b.caixa)+'</b><small class="'+(b.dCaixa>=0?'pos':'neg')+'">'+(b.dCaixa>=0?'+':'')+din(b.dCaixa)+'</small></div>'+
+      '<div><span>ranking</span><b>'+b.pos+'º</b><small class="'+(sb>0?'pos':(sb<0?'neg':'mut'))+'">'+(sb>0?'↑ subiu '+sb:(sb<0?'↓ caiu '+(-sb):'manteve'))+'</small></div>'+
+      '</div>';
+  }
   h+='<div class="card"><div class="card-h"><h2>Caixa</h2><span>'+din(b.rec)+' faturados</span></div><div class="card-b">'+
     b.det.map(function(d){return '<div class="kv"><span>'+esc(d[0])+'</span><b class="'+(d[1]>=0?'pos':'neg')+'">'+din(d[1])+'</b></div>';}).join('')+
     '<div class="kv"><span>Caixa agora</span><b>'+din(b.caixa)+'</b></div>'+
@@ -1609,7 +1746,7 @@ function abrirRel(){
       '<tr><th>Cliente</th><th class="r">J</th><th class="r">G</th><th class="r">Nota</th><th class="r">Nível</th><th class="r">Vale</th></tr>'+
       b.rel.map(function(j){
         return '<tr><td>'+esc(j.n)+(j.prem&&j.prem.length?' <span style="color:var(--warn);font-size:10px">★</span>':'')+'</td><td class="r">'+j.j+'</td><td class="r">'+j.g+'</td><td class="r">'+n2(j.nota)+'</td>'+
-          '<td class="r '+(j.d>2?'pos':(j.d<0.5?'neg':''))+'">'+(j.d>=0?'+':'−')+n1(Math.abs(j.d))+'</td><td class="r">'+din(j.val)+'</td></tr>';
+          '<td class="r '+(j.d>0?'pos':(j.d<0?'neg':'mut'))+'">'+(j.d>0?'+':(j.d<0?'−':''))+Math.abs(j.d)+'</td><td class="r">'+din(j.val)+'</td></tr>';
       }).join('')+'</table></div></div>';
   }
   var j=b.janela;
@@ -1642,19 +1779,23 @@ function carregar(){
     if(!o.div||o.div.length!==MUNDO.length)return null;
     if(!o.clientes||!o.pool||!o.ciclo)return null;
     limparConfLog(o);
+    (o.rivais||[]).forEach(function(r,i){
+      if(r.ano===undefined){r.ano=RIVAL_ANO[i%RIVAL_ANO.length]*Math.pow(1.21,o.temp-1);r.g=1.21;delete r.forca;}
+    });
     return o;
   }catch(e){return null;}
 }
 
 /* =================== eventos =================== */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
+  var t=ev.target.closest('[data-irrank],[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
   if(!t)return;
   if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
   var d=t.dataset;
   if(d.a){scrollPos[aba]=window.scrollY;aba=d.a;render();return;}
   if(d.se){subEsc=d.se;render();return;}
   if(d.fa){fichaAba=d.fa;renderSheet();return;}
+  if(d.irrank){aba='esc';subEsc='rank';render();return;}
   if(d.nome){
     var nv2=prompt('Nome da agência:',S.nome||'');
     if(nv2&&nv2.trim())S.nome=nv2.trim().slice(0,28);
@@ -1662,13 +1803,13 @@ document.addEventListener('click',function(ev){
   }
   if(d.f){filtro=d.f;render();return;}
   if(d.p){abrirJogador(+d.p);return;}
-  if(d.sond){var ps=porId(+d.sond);if(ps){var r=sondar(ps);toast(r.m);}render();return;}
+  if(d.sond){var ps=porId(+d.sond);if(ps){var r=sondar(ps);toast(r.m);if(r.ok&&S.tut)S.tut.sond=1;}render();return;}
   if(d.sign){var pa=porId(+d.sign);if(pa){var r2=assinar(pa);toast(r2.m);if(r2.ok)fecharSheet();}render();return;}
   if(d.ord){ordem=d.ord;render();return;}
   if(d.planopad){S.planoPad=d.planopad;render();return;}
   if(d.plano){
     var pl=d.plano.split(':'),pj7=porId(+pl[0]);
-    if(pj7){pj7.plano=pl[1];toast(esc(pj7.nome)+': '+PLANOS.filter(function(x){return x.id===pl[1];})[0].d+'.');}
+    if(pj7){pj7.plano=pl[1];if(S.tut)S.tut.dir=1;toast(esc(pj7.nome)+': '+PLANOS.filter(function(x){return x.id===pl[1];})[0].d+'.');}
     render();return;
   }
   if(d.recall){
@@ -1755,7 +1896,14 @@ document.addEventListener('click',function(ev){
     }
     render();return;
   }
-  if(d.seg){var pg=porId(+d.seg);if(pg&&pg.assedio){var ok=segurarCliente(pg);toast(ok?'Ele ficou.':'Não convenceu. A rival segue rondando.');}render();return;}
+  if(d.seg){
+    var pg=porId(+d.seg);
+    if(pg&&pg.assedio){
+      if(pg.segurou===S.temp)toast('Você já sentou com ele nesta janela. Só na próxima.');
+      else toast(segurarCliente(pg)?'Ele ficou.':'Não convenceu. A rival segue rondando.');
+    }
+    render();return;
+  }
   if(d.buscaremp){
     var pe=porId(+d.buscaremp);
     if(pe){if(!S.emps)S.emps={};S.emps[pe.id]=gerarEmprestimos(pe);
@@ -1779,24 +1927,23 @@ document.addEventListener('click',function(ev){
   }
   if(d.prop){
     var pf=porId(+d.prop),prop=neg.prop;
+    if(!S.renovTent)S.renovTent={};
+    if((S.renovTent[pf.id]||0)>=3){toast('O '+clube(pf.clube).n+' encerrou a conversa. Só na próxima janela.');render();return;}
+    S.renovTent[pf.id]=(S.renovTent[pf.id]||0)+1;
     if(Math.random()<chanceRenov(pf,prop)){
       var c2=fecharRenov(pf,prop);neg=null;
       toast('Renovado. Comissão de '+din(c2)+'.');
     }else{
       mexeConf(pf,-2,'renovação travada no '+clube(pf.clube).n);
       neg.prop.sal*=0.94;
-      toast('O '+clube(pf.clube).n+' recusou. Eles voltaram com menos.');
+      toast(S.renovTent[pf.id]>=3?'O '+clube(pf.clube).n+' recusou e encerrou a conversa nesta janela.':'O '+clube(pf.clube).n+' recusou. Eles voltaram com menos.');
       S.noticias.push({t:'O '+clube(pf.clube).n+' recusou sua proposta por <b>'+esc(pf.nome)+'</b>.',k:''});
     }
     render();return;
   }
   if(d.conv){
     var pc2=porId(+d.conv);
-    if(pc2){
-      mexeConf(pc2,ri(3,9)+niv('psi')*2,'você conversou e prometeu resolver');
-      pc2.promessa=S.temp;
-      toast('Conversa feita. Ele topa esperar mais uma temporada.');
-    }
+    if(pc2)toast(conversar(pc2).m);
     render();return;
   }
   if(d.inv){
@@ -1819,7 +1966,7 @@ document.addEventListener('click',function(ev){
     }
     render();return;
   }
-  if(t.id==='btn-temp'){rodarTemporada();neg=null;render();abrirRel();return;}
+  if(t.id==='btn-temp'){rodarTemporada();neg=null;aval=null;render();abrirRel();return;}
   if(t.id==='btn-verrel'){abrirRel();return;}
   if(t.id==='sheet-x'){fecharSheet();render();return;}
   if(t.id==='btn-fecharrel'){

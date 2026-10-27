@@ -1,5 +1,5 @@
 // Cache do app para rodar offline. Suba a versão quando mudar a lista de arquivos.
-var CACHE = 'agente-v1';
+var CACHE = 'agente-v2';
 var ARQUIVOS = [
   './',
   './index.html',

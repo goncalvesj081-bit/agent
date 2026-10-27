@@ -38,7 +38,7 @@ cache, suba a versão `CACHE` em `sw.js`.
 
 ## 1. Visão geral
 
-Você abre um escritório numa mesa de sala de casa, com um cliente ruim e R$ 120 mil, e tenta
+Você abre um escritório numa mesa de sala de casa, com um cliente ruim e R$ 180 mil, e tenta
 virar agência.
 
 O jogo é de **informação e timing**, não de simulação esportiva. Não existem partidas: a
@@ -113,6 +113,8 @@ Mudar de sede é obra: você paga agora e ela fica pronta em 1 ou 2 temporadas.
   | Cem milhões faturados | somar R$ 100 mi de receita acumulada |
 
 - **Seis agências rivais** faturam junto e aparecem no ranking, com a distância para a mediana.
+  Cada uma cresce cerca de 20% por temporada, acompanha o ciclo de mercado e fica mais forte
+  quando leva um cliente seu. Você começa em último; virar a maior agência é o objetivo.
 
 ---
 
@@ -163,7 +165,8 @@ custa 12 pontos de confiança.
 
 ### Contrato e cláusula
 
-É uma mesa de renovação com quatro eixos ajustáveis. A probabilidade de aceite é recalculada
+É uma mesa de renovação com quatro eixos ajustáveis. O clube aceita até **três propostas por
+janela**: depois disso encerra a conversa até a próxima. A probabilidade de aceite é recalculada
 a cada clique.
 
 | Eixo | Opções |
@@ -181,7 +184,7 @@ cobre a cláusula não pode ser barrada pelo clube.
 - Clubes menores levam o jogador por uma temporada, com status prometido e salário assumido
   por eles.
 - A comissão é menor, mas resolve o cliente encalhado.
-- Ele volta sozinho na virada.
+- Ele volta sozinho na virada. Enquanto está emprestado, não recebe propostas de compra.
 
 ### Artigo 19 (regra real da FIFA)
 
@@ -210,7 +213,8 @@ Aqui está o timing do jogo: vender em euforia e assinar em crise.
 | Transferência com titularidade | +11 |
 | Contrato acima do mercado | +9 |
 | Prêmio individual | +4 a +9 |
-| Conversar e prometer solução | +3 a +9 |
+| Conversar (uma vez por janela) | +3 a +9 |
+| Promessa não cumprida | −8 |
 | Temporada inteira jogando | +7 |
 | Proposta recusada que ele queria | −5 |
 | Temporada no banco | −9 |
@@ -220,7 +224,10 @@ Aqui está o timing do jogo: vender em euforia e assinar em crise.
 
 - O cliente cobra: quer jogar, quer salário compatível e quer clube maior.
 - A partir da **terceira temporada**, agências rivais passam a assediar quem está insatisfeito.
-- Segurar o cliente depende de confiança, reputação e suporte ao atleta.
+- Segurar o cliente depende de confiança, reputação e suporte ao atleta. Dá para tentar
+  **uma vez por janela**.
+- Conversar com um cliente que tem exigência vale como promessa: se a exigência continuar de
+  pé quando a temporada rodar, ele perde 8 de confiança.
 
 ---
 
@@ -249,7 +256,7 @@ Chance de ~2% por temporada, que sobe com a idade. Derruba jogos, nível e fama 
 
 | Aba | Conteúdo |
 |---|---|
-| **Mesa** | estado do mercado, casos que passaram pela diretriz, pendências, botão de rodar a temporada |
+| **Mesa** | primeiros passos (nas três primeiras temporadas), termômetro do mercado com tendência, corrida das agências, casos que passaram pela diretriz, pendências, botão de rodar a temporada |
 | **Clientes** | lista com nível, valor, contrato e confiança; chips de diretriz; ação direta na linha |
 | **Nomes** | quem o escritório trouxe; assinar e sondar em um toque; filtros e ordenação |
 | **Análise** | painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
