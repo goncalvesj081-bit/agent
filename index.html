@@ -542,6 +542,8 @@ var DIF={
 };
 function dif(){return DIF[(S&&S.dif)||'normal']||DIF.normal;}
 /* quanto do seu faturamento cada rival persegue */
+/* faturamento anual (R$ mi) em que o crescimento proprio de uma rival praticamente para */
+var RIVAL_TETO=600;
 var RIVAL_FORCA=[0.5,0.65,0.8,0.95,1.12,1.3];
 function rivalDe(n){for(var i=0;i<S.rivais.length;i++)if(S.rivais[i].n===n)return S.rivais[i];return null;}
 var NOMES=['Kaiquinho','Vitinho','Deivid','Ruan','Peterson','Jhonatan','Wesley','Cauã','Yuri','Nilsinho','Everaldo','Maicon','Léo Fumaça','Tiaguinho','Robson','Danilinho','Cleiton','Vanderson','Igor','Marcelinho','Adriel','Juan Pablo','Zé Rafael','Bruninho','Weverton','Gilmar','Alison','Paulinho','Rodriguinho','Kauê','Ítalo','Erick','Denilson','Matheusinho','Jefinho','Gabriel Melo','Luan','Otávio','Serginho','Hélio','Nicolas','Vinicinho','Emerson','Carlinhos','Rafinha','Joãozinho','Douglas','Wanderson','Ederson','Micael'];
@@ -1256,7 +1258,9 @@ function rodarTemporada(){
     /* dois caminhos: o crescimento proprio (base) e a perseguicao a voce (track);
        a rival fatura o maior dos dois, sem um inflar o outro */
     if(r.base===undefined){r.base=r.ano;r.track=0;}
-    r.base=r.base*cl(r.g+gs()*0.05,1.08,1.36)*S.ciclo.v/(S.ciclo.ant||1);
+    /* o crescimento proprio desacelera perto do teto de uma agencia gigante */
+    var gr=cl(r.g+gs()*0.05,1.08,1.36)-1;
+    r.base=r.base*(1+gr*cl(1-r.base/RIVAL_TETO,0.02,1))*S.ciclo.v/(S.ciclo.ant||1);
     r.track+=(media*(r.forca||RIVAL_FORCA[k%RIVAL_FORCA.length])*dif().forca*(lider?dif().lider:1)-r.track)*0.6;
     r.ano=Math.max(r.base,r.track);
     r.fat+=r.ano;
@@ -2591,6 +2595,52 @@ function abrirRel(){
   aberto=null;relAberto=true;
 }
 
+/* =================== conserto de saves ===================
+   Carreiras salvas antes da correcao do salario na renovacao podem ter contratos absurdos e,
+   por causa deles, caixa, receita e rivais em valores impossiveis. Ao carregar, o jogo volta
+   esses numeros para a ultima temporada sa do historico. */
+var ABSURDO=1e6; /* R$ 1 tri: acima disso so por bug */
+function repararCarreira(){
+  var fix=[];
+  S.clientes.concat(S.exCli||[]).forEach(function(p){
+    var j=salarioJusto(p);
+    if(!(p.ct.sal<=j*4)){p.ct.sal=j*1.1;if(p.agencia==='VOCÊ')fix.push('salário de '+p.nome);}
+    if(!(p.rendeu<ABSURDO))p.rendeu=0;
+    if(p.dir&&!(p.dir.pago<ABSURDO))p.dir.pago=0;
+  });
+  var ruim=function(v){return !(Math.abs(v)<ABSURDO);};
+  var sujo=ruim(S.caixa)||ruim(S.receita)||ruim(S.recTemp)||S.rivais.some(function(r){return ruim(r.fat)||ruim(r.ano)||ruim(r.track||0);});
+  if(sujo){
+    /* volta para a temporada anterior a primeira com valor absurdo */
+    var i0=-1;
+    for(var i=0;i<S.hist.length;i++){var h=S.hist[i];if(ruim(h.cx)||ruim(h.eu||0)||ruim(h.rec||0)||(h.rf||[]).some(ruim))break;i0=i;}
+    S.hist=S.hist.slice(0,i0+1);
+    var bom=i0>=0?S.hist[i0]:null;
+    S.caixa=bom?bom.cx:0.18;
+    S.receita=bom&&typeof bom.eu==='number'?bom.eu:0;
+    S.recTemp=0;
+    S.rivais.forEach(function(r,k){
+      var f=bom&&bom.rf?bom.rf[k]:null;
+      if(ruim(r.fat))r.fat=typeof f==='number'?f:RIVAL_ANO[k]*3;
+      if(ruim(r.ano)||ruim(r.base||0)){r.base=Math.min(RIVAL_TETO,RIVAL_ANO[k]*Math.pow(1.21,S.temp-1));r.ano=r.base;}
+      if(ruim(r.track||0))r.track=0;
+      r.ano=Math.max(r.base||0,r.track||0);
+    });
+    /* as fontes de receita voltam proporcionalmente ao total consertado */
+    var tot=0,k;for(k in S.rec)tot+=S.rec[k];
+    if(!(tot<ABSURDO)){S.rec={};S.rec.salario=S.receita;}
+    S.rel=null;S.eventos=[];gerarMetas();
+    fix.push('caixa, faturamento e ranking voltaram à temporada '+(bom?bom.t:0));
+  }
+  if(S.metas&&S.metas.some(function(m){return ruim(m.cx)||ruim(m.alvo);}))gerarMetas();
+  return fix;
+}
+function avisarReparo(fix){
+  if(!fix.length)return;
+  dialogo({titulo:'Consertamos a sua carreira',texto:'Um bug antigo na mesa de renovação deixou valores impossíveis neste save. O jogo corrigiu:',
+    itens:fix.map(esc),nota:'O resto da carreira (clientes, sede, marcos, histórico) continua como estava.',ok:'Entendi',cancelar:false});
+}
+
 /* =================== janela de dialogo ===================
    Substitui confirm/prompt do navegador. o: {titulo, texto, itens[], nota, ok, cancelar,
    perigo, campo:{valor,max}, codigo} · aoOk recebe o texto do campo, quando houver. */
@@ -2651,7 +2701,7 @@ function backupClique(id){
     dialogo({titulo:'Importar esta carreira?',texto:'<b>'+esc(o.nome||'Agência')+'</b> · temporada '+o.temp+' · '+o.clientes.length+' cliente'+(o.clientes.length!==1?'s':'')+'.',
       nota:'Ela substitui a carreira que está neste aparelho.',perigo:true,ok:'Importar'},function(){
       try{localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast('Não consegui gravar no aparelho.');return;}
-      S=carregar();fecharSheet();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();
+      S=carregar();var fx2=repararCarreira();fecharSheet();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();avisarReparo(fx2);
       toast('Carreira importada: temporada '+S.temp+'.');
     });
     return;
@@ -2972,7 +3022,7 @@ document.addEventListener('click',function(ev){
   if(t.id==='btn-novo'){
     var el=$('#nome-esc'),nm=el&&el.value?el.value.trim().slice(0,28):'';
     novoJogo(nm||'Sua agência',difEscolhida);$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();return;}
-  if(t.id==='btn-cont'){S=carregar();if(!S.metas){gerarMetas();S.eventos=[];}$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();if(S.fim)abrirRel();return;}
+  if(t.id==='btn-cont'){S=carregar();if(!S.metas){gerarMetas();S.eventos=[];}var fx=repararCarreira();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();if(S.fim)abrirRel();avisarReparo(fx);return;}
 });
 
 var sv=carregar();

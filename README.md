@@ -521,7 +521,8 @@ convocação    = (nível − 68)/14 · (0,4 + fama/100) · (1 se joga, 0,45 se 
 meta          = paga 18% a 30% da renda (arredondado) e 1–2 de reputação; bônus de 25% da renda pelas três
 rivalBase     = base · (1,205 a 1,255 + ruído) · variação do ciclo, por temporada
 rivalTrack   += (seuFaturamentoDaTemporada · força · dificuldade · (pressão se você lidera) − rivalTrack) · 0,6
-rivalAno      = max(rivalBase, rivalTrack)          força = 0,5 · 0,65 · 0,8 · 0,95 · 1,12 · 1,3
+rivalAno      = max(rivalBase, rivalTrack)
+               (o crescimento próprio desacelera perto de R$ 600 mi por temporada)          força = 0,5 · 0,65 · 0,8 · 0,95 · 1,12 · 1,3
 qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação da equipe)
 ```
 
@@ -542,6 +543,9 @@ qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação 
 - Saves antigos continuam valendo: o carregamento completa os campos novos (rivais, metas,
   acontecimentos) quando faltam.
 - Saves e backups antigos sem dificuldade entram como Normal.
+- Carreiras afetadas pelo bug antigo do salário na renovação são consertadas ao carregar: salário
+  absurdo volta para o mercado, e caixa, faturamento e rivais voltam à última temporada sã do
+  histórico. Uma janela avisa o que foi corrigido.
 - As mudanças desta rodada foram validadas com bots no navegador (Playwright): um que joga
   carreiras inteiras para medir o equilíbrio, um que clica em botões aleatórios e um que audita
   o estado do jogo a cada temporada em carreiras de 80 temporadas. Os bots não estão no
@@ -603,3 +607,4 @@ Datas de 2026.
 | 27/10 | Saídas | risco de perder clientes na Mesa; quem saiu aparece na revelação, no topo do relatório e da Mesa |
 | 27/10 | Correção | salário na renovação sem limite (chegava a valores absurdos) e chance de aceite que quase não caía com pedido alto |
 | 27/10 | Valores | dinheiro em bilhões (bi) e trilhões (tri) em carreiras longas; sem "R$ 1000 mil" nos arredondamentos |
+| 27/10 | Conserto | saves afetados pelo bug do salário são corrigidos ao carregar; crescimento próprio das rivais com teto, para carreiras muito longas |
