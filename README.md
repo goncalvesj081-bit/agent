@@ -602,3 +602,4 @@ Datas de 2026.
 | 27/10 | Visual | confirmações e campos de texto em janela própria do jogo, no lugar das caixas do navegador |
 | 27/10 | Saídas | risco de perder clientes na Mesa; quem saiu aparece na revelação, no topo do relatório e da Mesa |
 | 27/10 | Correção | salário na renovação sem limite (chegava a valores absurdos) e chance de aceite que quase não caía com pedido alto |
+| 27/10 | Valores | dinheiro em bilhões (bi) e trilhões (tri) em carreiras longas; sem "R$ 1000 mil" nos arredondamentos |
