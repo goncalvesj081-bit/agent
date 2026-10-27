@@ -163,8 +163,11 @@ Oito marcos de carreira, cada um valendo reputação:
 
 - O nível e o teto do jogador aparecem como faixa (`45–63`), nunca como número, até a leitura
   chegar a 95%.
-- Cada jogador tem um **erro fixo e próprio**. A sondagem encolhe esse erro, então a faixa
-  só aperta em volta da verdade e nunca pula.
+- Cada jogador tem um **desvio fixo e próprio**, que é uma fração (até 85%) da meia-largura da
+  faixa. Por isso a faixa **sempre contém o valor real**, e cada sondagem só a aperta em volta
+  dele, sem pular. Exemplo com nível real 46: `28–61 → 33–57 → 37–54 → 41–50 → 45–47`.
+- Entre temporadas a faixa pode se mover, porque o jogador evolui e a leitura de quem não é seu
+  envelhece (fica mais larga).
 - Um cliente seu você passa a conhecer sozinho, cerca de 20% por temporada.
 - Todo jogador gerado tem nome único na carteira e no radar.
 
@@ -497,3 +500,4 @@ Datas de 2026.
 | 27/10 | Metas e acontecimentos | metas da temporada; acontecimentos; disputa pelos garotos; venda da agência; temporada com suspense; gráficos; rosto de humor |
 | 27/10 | Correções | empréstimo cancela propostas e não renova com o clube do empréstimo (em todas as telas); botão de transferência com o destino certo; pendência fantasma; aviso apontando a proposta errada; erro ao tocar proposta que sumiu |
 | 27/10 | Auditoria | acontecimento que perde a validade; equipe não empresta quem tem proposta grande; encerrar relação limpa as propostas |
+| 27/10 | Correção | faixa de nível e teto: em ~1 de cada 5 jogadores ela não continha o valor real e "pulava" a cada sondagem; agora sempre contém e só aperta |

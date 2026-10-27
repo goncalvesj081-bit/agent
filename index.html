@@ -528,19 +528,22 @@ function custoAno(){return escr().cus+(S.obras.length?0:0);}
 function carteira(){var t=0;S.clientes.forEach(function(p){t+=valor(p);});return t;}
 
 /* ---------- conhecimento e faixa ---------- */
+/* A faixa sempre contem a verdade: o desvio de cada jogador e fixo, mas e uma fracao
+   (ate 85%) da meia-largura. Sondar encolhe a largura, entao a faixa so aperta em volta dele. */
+function desvio(e){return cl(e*0.45,-0.85,0.85);}
 function faixa(p){
   if(p.agencia==='VOCÊ'&&p.conh>=0.95)return {lo:p.nv,hi:p.nv,exato:true};
   var m=18*(1-p.conh);
-  return {lo:Math.max(20,Math.round(p.est-m)),hi:Math.min(99,Math.round(p.est+m)),exato:false};
+  return {lo:cl(Math.floor(p.est-m),20,p.nv),hi:cl(Math.ceil(p.est+m),p.nv,99),exato:false};
 }
 function faixaPot(p){
   var m=22*(1-p.conh),f=faixa(p);
-  return {lo:Math.max(f.lo,Math.round(p.estPot-m)),hi:Math.min(99,Math.max(f.hi,Math.round(p.estPot+m)))};
+  return {lo:cl(Math.max(f.lo,Math.floor(p.estPot-m)),20,p.pot),hi:cl(Math.max(f.hi,Math.ceil(p.estPot+m)),p.pot,99)};
 }
 function recalcEst(p){
   if(p.err===undefined){p.err=gs();p.errP=gs();}
-  p.est=cl(p.nv+p.err*14*(1-p.conh),20,99);
-  p.estPot=cl(Math.max(p.est,p.pot+p.errP*16*(1-p.conh)),20,99);
+  p.est=p.nv+desvio(p.err)*18*(1-p.conh);
+  p.estPot=p.pot+desvio(p.errP)*22*(1-p.conh);
 }
 function sondar(p){
   if(S.sondUsadas>=limSond())return {ok:false,m:'Você já usou as '+limSond()+' sondagens desta janela.'};
@@ -1080,7 +1083,7 @@ function rodarTemporada(){
     S.evs.push({t:'<b>'+esc(p.nome)+'</b> pendurou as chuteiras aos '+p.idade+' anos. Em '+(S.temp-p.desde)+' temporadas com você, rendeu '+din(p.rendeu||0)+'.',k:'big'});
     if(Math.random()<0.45){
       var novo=gerarJogador();novo.agencia=null;novo.conh=cl(novo.conh+0.35,0,0.9);
-      novo.est=cl(novo.nv+gs()*8,20,99);
+      recalcEst(novo);
       S.pool.push(novo);
       S.evs.push({t:esc(p.nome)+' indicou <b>'+esc(novo.nome)+'</b>, do '+clube(novo.clube).n+', e já contou tudo sobre o garoto.',k:'good'});
     }
@@ -1939,7 +1942,7 @@ function fRes(p,meu,c,f,fp){
 function fCar(p,meu,c,f,fp){
   var h='',hs=(p.hist||[]).filter(function(x){return typeof x.nv==='number';}).slice(-14);
   if(hs.length){
-    var nvs=hs.map(function(x){return meu?x.nv:Math.round(x.nv+p.err*10*(1-p.conh));}),
+    var nvs=hs.map(function(x){return meu?x.nv:Math.round(x.nv+desvio(p.err)*18*(1-p.conh));}),
         ser=[{v:nvs,cor:'var(--ac)',nome:meu?'nível':'nível (leitura)'}];
     if(meu)ser.push({v:hs.map(function(){return p.pot;}),cor:'var(--mut2)',nome:'teto '+p.pot,trac:true,larg:1.4,ponto:false});
     var ult=nvs[nvs.length-1],pri=nvs[0];
