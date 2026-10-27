@@ -5,20 +5,21 @@ Simulador de carreira de empresário de jogadores · **BNF GAMES**
 | | |
 |---|---|
 | Arquivo | `index.html`, arquivo único, sem build e sem dependência externa |
-| Save | `localStorage`, chave `agente:v3` (de ~7 a 40 KB conforme a carreira) |
+| Save | `localStorage`, chave `agente:v3` (de ~7 KB no começo a ~130 KB numa carreira de 80 temporadas) |
+| Recordes | `agente:rec` (maior faturamento) e `agente:melhor` (melhor venda da agência) |
 | Mundo | 304 clubes em 18 ligas, base copiada do `fundo-de-clubes.html` |
 | App | instalável (PWA) e funciona offline: `manifest.webmanifest`, `sw.js`, `icons/` |
-| Site | GitHub Pages, publicado a cada push na `main` (`.github/workflows/pages.yml`) |
+| Site | https://goncalvesj081-bit.github.io/agent/, publicado a cada push na `main` (`.github/workflows/pages.yml`) |
 
 ### Instalar no celular
 
-Abra `https://goncalvesj081-bit.github.io/agent/`.
+Abra https://goncalvesj081-bit.github.io/agent/.
 
 - **Android (Chrome):** toque em **Instalar o app** na tela inicial do jogo, ou use o menu ⋮ → *Instalar app*.
 - **iPhone (Safari):** **Compartilhar** → **Adicionar à Tela de Início**.
 
-O save continua no aparelho (`localStorage`). Quando um arquivo novo entrar na lista do
-cache, suba a versão `CACHE` em `sw.js`.
+O save fica no aparelho. Com internet, o app sempre busca a versão nova do jogo; sem internet,
+abre a última que baixou. Se uma atualização não aparecer, feche e abra o app de novo.
 
 ## Índice
 
@@ -29,17 +30,21 @@ cache, suba a versão `CACHE` em `sw.js`.
 5. [Mercado e negociação](#5-mercado-e-negociação)
 6. [Relação com o cliente](#6-relação-com-o-cliente)
 7. [Vida do jogador](#7-vida-do-jogador)
-8. [Telas](#8-telas)
-9. [Fórmulas](#9-fórmulas)
-10. [Backlog](#10-backlog)
-11. [Histórico de decisões](#11-histórico-de-decisões)
+8. [Metas e acontecimentos](#8-metas-e-acontecimentos)
+9. [Fim de carreira](#9-fim-de-carreira)
+10. [Telas](#10-telas)
+11. [Fórmulas](#11-fórmulas)
+12. [Desenvolvimento](#12-desenvolvimento)
+13. [Backlog](#13-backlog)
+14. [Histórico de decisões](#14-histórico-de-decisões)
+15. [Histórico de versões](#15-histórico-de-versões)
 
 ---
 
 ## 1. Visão geral
 
 Você abre um escritório numa mesa de sala de casa, com um cliente ruim e R$ 180 mil, e tenta
-virar agência.
+virar a maior agência do mercado.
 
 O jogo é de **informação e timing**, não de simulação esportiva. Não existem partidas: a
 temporada roda num botão e devolve números.
@@ -50,19 +55,30 @@ temporada roda num botão e devolve números.
 |---|---|
 | Recorrente | comissão sobre salário |
 | Recorrente | direitos de imagem (sua parte: 20%) |
-| Pontual | transferência |
-| Pontual | renovação / luvas |
+| Pontual | transferência (com opção de percentual da próxima venda) |
+| Pontual | renovação e luvas |
+| Pontual | empréstimo |
+| Pontual | metas da temporada |
+| Pontual | patrocínios (acontecimento) |
 
 ---
 
 ## 2. Loop de uma temporada
 
-1. **Janela**: sondar nomes, assinar clientes, definir diretrizes, renovar contratos,
-   buscar empréstimo e responder às exceções da janela anterior.
-2. **Rodar a temporada** (um toque): os jogadores jogam, evoluem, ganham prêmios e se
-   machucam; clubes sobem e descem de divisão; o ciclo de mercado gira.
-3. **Relatório anual**: caixa com conta aberta, desempenho de cada cliente, janela de
-   transferências resolvida pelas diretrizes e eventos.
+1. **Janela**
+   - responder aos acontecimentos (cartas com escolha);
+   - correr atrás das metas da temporada;
+   - sondar nomes e assinar clientes, antes que uma rival leve os garotos disputados;
+   - definir diretrizes e escolher os craques;
+   - renovar contratos, buscar empréstimo, resolver as pendências dos craques.
+
+   A equipe já resolveu a rotina dos outros clientes assim que a janela abriu.
+2. **Rodar a temporada** (um toque): a temporada se revela cliente a cliente. Os jogadores
+   jogam, evoluem, ganham prêmios e se machucam; clubes sobem e descem de divisão; o ciclo de
+   mercado gira; rivais crescem e levam os garotos que você deixou passar.
+3. **Relatório anual**: faturamento, variação do caixa, posição no ranking, conta aberta do
+   caixa, desempenho de cada cliente, metas cumpridas, janela de transferências, o que a equipe
+   fez e o que aconteceu.
 4. Volta para a janela.
 
 ---
@@ -71,35 +87,30 @@ temporada roda num botão e devolve números.
 
 ### Escritório (a alavanca principal)
 
-| Nível | Sede | Clientes | Craques com você |
-|---|---|---|---|
-| 1 | mesa em casa | 4 | todos (sem equipe) |
-| 2 | sala alugada | 8 | 4 |
-| 3 | escritório com equipe | 14 | 6 |
-| 4 | agência nacional | 22 | 9 |
-| 5 | agência com filial na Europa | 32 | 12 |
+| Nível | Sede | Clientes | Craques com você | Custo da obra | Custo por temporada |
+|---|---|---|---|---|---|
+| 1 | mesa na sala de casa | 4 | todos (sem equipe) | — | R$ 28 mil |
+| 2 | sala alugada no centro | 8 | 4 | R$ 900 mil · 1 temp. | R$ 220 mil |
+| 3 | escritório com equipe | 14 | 6 | R$ 6 mi · 1 temp. | R$ 900 mil |
+| 4 | agência nacional | 22 | 9 | R$ 24 mi · 2 temp. | R$ 3,4 mi |
+| 5 | agência com filial na Europa | 32 | 12 | R$ 90 mi · 2 temp. | R$ 11 mi |
 
-O nível define:
-- quantos clientes cabem;
-- quantos nomes chegam por temporada;
-- quantas sondagens cabem na janela;
-- até que liga vai o seu alcance;
-- as duas taxas de comissão.
-
-Mudar de sede é obra: você paga agora e ela fica pronta em 1 ou 2 temporadas.
+O nível também define quantos nomes chegam por temporada, quantas sondagens cabem na janela,
+até que liga vai o seu alcance e as duas taxas de comissão (salário e transferência). Mudar de
+sede é obra: você paga agora e ela fica pronta depois.
 
 ### Equipe e craques
 
 A partir da sala alugada a agência tem equipe, e você passa a cuidar pessoalmente só dos
-**craques** (★). O número de craques depende da sede (tabela acima). Você marca quem é craque com
-a estrela, na lista de clientes ou na ficha; as vagas que sobrarem ficam com os mais valiosos.
+**craques** (★). Você marca quem é craque na estrela, na lista de clientes ou na ficha; as vagas
+que sobrarem ficam com os mais valiosos.
 
 Os outros clientes ficam com a equipe, que age assim que a janela abre:
 
 | Situação | O que a equipe faz |
 |---|---|
 | Contrato vencendo, ou cliente pedindo salário | renova a preço de mercado (duas tentativas, chance um pouco menor que a sua) |
-| Cliente querendo jogar | busca empréstimo onde ele seja titular ou rode o elenco |
+| Cliente querendo jogar | busca empréstimo onde ele seja titular ou rode o elenco (não empresta quem tem proposta grande esperando você) |
 | Assédio de rival | tenta segurar uma vez |
 | Cliente com exigência | conversa com ele, sem fazer promessa |
 | Propostas, com a diretriz *Equipe* | fecha só o que for bom para ele: mais minutos ou salário 15% maior |
@@ -110,6 +121,8 @@ renovações da equipe; o suporte ao atleta melhora a chance de segurar.
 
 ### Melhorias (também em obra)
 
+Três níveis cada.
+
 | Melhoria | Efeito |
 |---|---|
 | Rede de olheiros | mais nomes chegam à sua mesa e a sondagem rende mais |
@@ -117,24 +130,30 @@ renovações da equipe; o suporte ao atleta melhora a chance de segurar.
 | Assessoria de imprensa | a fama dos clientes cresce além do que o campo justifica (e aumenta a imagem) |
 | Suporte ao atleta | a confiança cai mais devagar e o cliente evolui melhor |
 
-### Marcos e ranking
+### Marcos
 
-- **Oito marcos de carreira**, cada um valendo reputação:
+Oito marcos de carreira, cada um valendo reputação:
 
-  | Marco | Condição |
-  |---|---|
-  | Primeiro cliente na elite | cliente numa liga de reputação 30 ou mais |
-  | Primeiro cliente na Europa | colocar um cliente num clube europeu |
-  | Primeiro prêmio individual | um cliente levar prêmio de temporada |
-  | Primeira transferência grande | fechar uma transferência acima de R$ 20 mi |
-  | Cinco clientes ao mesmo tempo | ter cinco na carteira de uma vez |
-  | Escritório com equipe | chegar ao terceiro nível de sede |
-  | Uma carreira inteira ao lado | ter um cliente que se aposentou com você |
-  | Cem milhões faturados | somar R$ 100 mi de receita acumulada |
+| Marco | Condição |
+|---|---|
+| Primeiro cliente na elite | cliente numa liga de reputação 30 ou mais |
+| Primeiro cliente na Europa | colocar um cliente num clube europeu |
+| Primeiro prêmio individual | um cliente levar prêmio de temporada |
+| Primeira transferência grande | fechar uma transferência acima de R$ 20 mi |
+| Cinco clientes ao mesmo tempo | ter cinco na carteira de uma vez |
+| Escritório com equipe | chegar ao terceiro nível de sede |
+| Uma carreira inteira ao lado | ter um cliente que se aposentou com você |
+| Cem milhões faturados | somar R$ 100 mi de receita acumulada |
 
-- **Seis agências rivais** faturam junto e aparecem no ranking, com a distância para a mediana.
-  Cada uma cresce cerca de 20% por temporada, acompanha o ciclo de mercado e fica mais forte
-  quando leva um cliente seu. Você começa em último; virar a maior agência é o objetivo.
+### Rivais e ranking
+
+- **Seis agências rivais** disputam o ranking de faturamento acumulado. Você começa em último;
+  virar a maior agência é o objetivo de longo prazo.
+- Cada rival cresce cerca de 20% a 25% por temporada e acompanha o ciclo de mercado.
+- Elas ficam mais fortes quando levam um cliente seu (por assédio) ou um garoto que você deixou
+  passar.
+- A Mesa mostra sua posição e quanto falta para passar a próxima. A Análise mostra a corrida
+  em gráfico.
 
 ---
 
@@ -147,6 +166,13 @@ renovações da equipe; o suporte ao atleta melhora a chance de segurar.
 - Cada jogador tem um **erro fixo e próprio**. A sondagem encolhe esse erro, então a faixa
   só aperta em volta da verdade e nunca pula.
 - Um cliente seu você passa a conhecer sozinho, cerca de 20% por temporada.
+- Todo jogador gerado tem nome único na carteira e no radar.
+
+### Disputa pelos garotos
+
+Na aba Nomes, alguns garotos sem agente e com bom teto aparecem com
+"*[rival]* está de olho: assine nesta janela ou ela leva". Se você não assinar, há 60% de
+chance de a rival levar quando a temporada rodar.
 
 ---
 
@@ -154,47 +180,48 @@ renovações da equipe; o suporte ao atleta melhora a chance de segurar.
 
 ### Diretrizes (como a janela se resolve)
 
-Cada cliente tem uma diretriz, que você troca com um toque na linha. Existe também uma
-diretriz padrão da agência para quem assina novo. Para clientes que estão com a equipe, a
-diretriz *Ouvir* aparece como **Equipe**: as propostas vão para a equipe, não para você.
+Cada cliente tem uma diretriz, num seletor de uma linha. Existe também uma diretriz padrão da
+agência, que vale para quem assina com você.
 
-| Diretriz | O que faz |
-|---|---|
-| Segurar | recusa tudo |
-| Ouvir | as propostas vêm para a sua mesa |
-| Buscar saída | fecha sozinho a melhor proposta pelo dinheiro |
-| Buscar minutos | fecha a que dá mais espaço no elenco |
+| Diretriz | Rótulo | O que faz |
+|---|---|---|
+| Segurar | Segurar | recusa tudo |
+| Ouvir | Ouvir (craque) · Equipe (os outros) | as propostas vêm para a sua mesa, ou para a equipe |
+| Buscar saída | Vender | fecha sozinho a melhor proposta pelo dinheiro |
+| Buscar minutos | Minutos | fecha a que dá mais espaço no elenco |
 
-**Só quatro casos chegam à sua mesa:**
-1. cliente em *Ouvir*;
-2. proposta fora da curva (valor 60% acima do que ele vale, ou salário dobrado);
-3. clube que barrou a saída;
-4. cliente que não quis ir.
+**Chegam à sua mesa:**
+1. craque em *Ouvir*;
+2. proposta fora da curva (valor 60% acima do que ele vale, ou salário dobrado); para clientes
+   da equipe, só se a comissão for grande para o tamanho da agência;
+3. craque que o clube barrou;
+4. craque que não quis ir.
 
 ### Propostas e transferência
 
 Cada proposta traz salário, valor da transferência, status prometido, duração, sua comissão
-e a chance de o clube atual liberar.
+e a chance de o clube atual liberar. O botão diz para qual clube ele vai.
 
 | Fechamento | Efeito |
 |---|---|
 | Normal | comissão cheia |
 | Com venda futura | metade da comissão hoje, mais 15% da próxima venda (cobrados automaticamente) |
 
-O cliente tem voz: pode recusar o destino (banco, salário menor ou liga mais fraca). Forçar
-custa 12 pontos de confiança.
+O cliente tem voz: pode recusar o destino (banco, salário menor ou liga mais fraca). Aí você
+escolhe entre **Forçar** (custa 12 de confiança) e **Desistir**. Quando o clube barra uma
+proposta, ela sai da lista.
 
 ### Contrato e cláusula
 
-É uma mesa de renovação com quatro eixos ajustáveis. O clube aceita até **três propostas por
-janela**: depois disso encerra a conversa até a próxima. A probabilidade de aceite é recalculada
-a cada clique.
+Mesa de renovação com quatro linhas ajustáveis (− e +), barra de chance de aceite recalculada a
+cada toque e contador de tentativas. O clube aceita até **três propostas por janela**; depois
+encerra a conversa até a próxima.
 
 | Eixo | Opções |
 |---|---|
-| Salário | livre |
-| Status no elenco | livre |
-| Duração | livre |
+| Salário | livre (mostra a diferença para o mercado) |
+| Status no elenco | fora dos planos → reserva → rodando o elenco → titular absoluto |
+| Duração | 1 a 5 temporadas |
 | Cláusula de rescisão | sem / 4× / 2,5× / 1,5× o valor |
 
 O trade-off da cláusula: uma cláusula baixa derruba a chance de aceite, mas uma proposta que
@@ -202,10 +229,12 @@ cobre a cláusula não pode ser barrada pelo clube.
 
 ### Empréstimo
 
-- Clubes menores levam o jogador por uma temporada, com status prometido e salário assumido
-  por eles.
-- A comissão é menor, mas resolve o cliente encalhado.
-- Ele volta sozinho na virada. Enquanto está emprestado, não recebe propostas de compra.
+- Clubes menores levam o jogador por **uma temporada**, com status prometido e salário assumido
+  por eles. A comissão é menor, mas resolve o cliente encalhado.
+- Emprestar cancela as propostas de compra que estavam na mesa.
+- Enquanto está emprestado, ele não recebe propostas de compra e **não renova contrato**: a ficha
+  mostra para onde e quando ele volta, e a renovação é com o clube dono, na volta.
+- Ele volta sozinho na virada, com o status que o clube dono acha justo.
 
 ### Artigo 19 (regra real da FIFA)
 
@@ -218,7 +247,8 @@ cobre a cláusula não pode ser barrada pelo clube.
 
 `crise → frio → normal → aquecido → euforia`
 
-Aqui está o timing do jogo: vender em euforia e assinar em crise.
+A Mesa mostra um termômetro com a fase atual, a tendência (esquentando, esfriando, estável) e a
+dica: vender no aquecido e na euforia, assinar no frio e na crise.
 
 ---
 
@@ -227,6 +257,7 @@ Aqui está o timing do jogo: vender em euforia e assinar em crise.
 ### Confiança
 
 - Escala de 0 a 100, com extrato das últimas oito mudanças (cada uma com motivo e sinal).
+- Um rosto de humor, pela confiança, aparece na lista de clientes e na Mesa.
 - **Abaixo de 35**, ele começa a procurar outra agência.
 
 | Evento | Efeito |
@@ -235,20 +266,23 @@ Aqui está o timing do jogo: vender em euforia e assinar em crise.
 | Contrato acima do mercado | +9 |
 | Prêmio individual | +4 a +9 |
 | Conversar (uma vez por janela) | +3 a +9 |
-| Promessa não cumprida | −8 |
 | Temporada inteira jogando | +7 |
 | Proposta recusada que ele queria | −5 |
+| Promessa não cumprida | −8 |
 | Temporada no banco | −9 |
 | Transferência forçada | −12 |
 
-### Exigências e assédio
+Os acontecimentos também mexem na confiança (seção 8).
+
+### Exigências, promessa e assédio
 
 - O cliente cobra: quer jogar, quer salário compatível e quer clube maior.
+- Conversar com quem tem exigência vale como **promessa**: se a exigência continuar de pé quando
+  a temporada rodar, ele perde 8 de confiança.
 - A partir da **terceira temporada**, agências rivais passam a assediar quem está insatisfeito.
-- Segurar o cliente depende de confiança, reputação e suporte ao atleta. Dá para tentar
-  **uma vez por janela**.
-- Conversar com um cliente que tem exigência vale como promessa: se a exigência continuar de
-  pé quando a temporada rodar, ele perde 8 de confiança.
+  Segurar depende de confiança, reputação e suporte ao atleta, e dá para tentar **uma vez por
+  janela**.
+- Encerrar a relação manda o cliente para uma rival e custa um pouco de reputação.
 
 ---
 
@@ -271,72 +305,99 @@ Chance de ~2% por temporada, que sobe com a idade. Derruba jogos, nível e fama 
 
 ---
 
-## 7b. Metas, acontecimentos e fim de carreira
+## 8. Metas e acontecimentos
 
 ### Metas da temporada
-Cada janela traz três metas curtas, na escala da agência: fechar uma transferência acima de um
-valor, assinar clientes, renovar contratos, terminar com certo caixa, faturar um tanto, ter
-clientes na Série A ou na Europa, ninguém abaixo de 55 de confiança, um prêmio individual. Cada
-meta paga dinheiro (entra como receita) e 1 ou 2 de reputação; cumprir as três dá um bônus.
-O resultado sai no relatório.
+
+Cada janela traz três metas curtas, na escala da agência:
+
+| Meta | Exemplo |
+|---|---|
+| Transferência | feche uma transferência acima de R$ X (70% do seu cliente mais valioso) |
+| Assinaturas | assine 1 ou 2 clientes novos |
+| Caixa | termine a temporada com R$ X em caixa |
+| Faturamento | fature R$ X nesta temporada |
+| Elite | tenha N clientes na Série A ou em liga mais forte |
+| Europa | tenha N clientes jogando na Europa (a partir do escritório com equipe) |
+| Renovações | renove N contratos |
+| Confiança | termine sem nenhum cliente abaixo de 55 de confiança |
+| Prêmio | um cliente seu leva um prêmio individual |
+
+Cada meta paga dinheiro (entra como receita) e 1 ou 2 de reputação. Cumprir as três dá um bônus.
+A Mesa mostra o progresso; caixa, faturamento e confiança só contam no fim da temporada.
 
 ### Acontecimentos
-Até dois por janela, a partir da segunda temporada, como cartas com escolha:
+
+Até dois por janela, a partir da segunda temporada, como cartas com escolha. Cada opção mostra
+o efeito antes de você escolher.
 
 | Acontecimento | Escolhas |
 |---|---|
-| Cliente flagrado numa festa | defender em público (reputação −1,5, confiança +7) · bronca em particular · deixar quieto (confiança −5) |
-| Marca quer o cliente como garoto-propaganda | fechar pelo valor · pedir quase o dobro (55%) · recusar |
+| Cliente flagrado numa festa | defender em público (reputação −1,5, confiança +7) · bronca em particular (confiança −2, 40% de a história crescer) · deixar quieto (confiança −5) |
+| Marca quer o cliente como garoto-propaganda | fechar pelo valor (fama +2) · pedir quase o dobro (55% de fechar) · recusar |
 | Pai do cliente pede adiantamento | adiantar (caixa, confiança +9) · negar (confiança −6) |
 | Clube quer renovar agora, 10% acima do mercado e 4 anos | aceitar · esperar |
 | Programa de TV quer entrevistar você | ir (70% reputação +1,5, 30% −1) · recusar |
-| Treinador de base tem um garoto especial | pagar e receber um nome bem conhecido · dispensar |
+| Treinador de base tem um garoto especial | pagar e receber um garoto de 15 a 17 anos bem conhecido · dispensar |
 
-Rodar a temporada sem responder aplica a última opção.
+- Rodar a temporada sem responder aplica a **última opção**.
+- Se a situação mudou desde que a carta chegou (o jogador foi emprestado, saiu da agência), a
+  carta perde a validade.
 
-### Disputa pelos garotos
-Na aba Nomes, alguns garotos sem agente aparecem com uma rival "de olho". Se você não assinar
-nessa janela, há 60% de chance de a rival levar, e ela fica mais forte.
+---
 
-### Fim de carreira
-Não há prazo: a agência dura o quanto você quiser. A partir da temporada 10 dá para **vender a
-agência**. O valor da agência é caixa + 6× a renda recorrente + 8% da carteira + reputação, e
-define o título:
+## 9. Fim de carreira
 
-| Valor | Título |
+Não há prazo: a agência dura o quanto você quiser. A partir da temporada 10, a aba Escritório
+oferece **vender a agência**, que encerra a carreira com o valor dela e um título:
+
+| Valor da agência | Título |
 |---|---|
 | até R$ 5 mi | Agente de bairro |
-| R$ 5 mi | Agência regional |
-| R$ 30 mi | Agência nacional |
-| R$ 150 mi | Potência internacional |
-| R$ 500 mi | Lenda do mercado |
+| a partir de R$ 5 mi | Agência regional |
+| a partir de R$ 30 mi | Agência nacional |
+| a partir de R$ 150 mi | Potência internacional |
+| a partir de R$ 500 mi | Lenda do mercado |
 
-A melhor venda fica gravada e aparece na tela inicial.
+O valor e o título atuais aparecem sempre na sede. A melhor venda fica gravada e aparece na tela
+inicial, junto com o recorde de faturamento.
 
-## 8. Telas
+O jogo também acaba se o escritório quebrar (caixa abaixo de −R$ 200 mil) ou se ficar sem
+clientes e sem caixa para ir atrás de outro.
+
+---
+
+## 10. Telas
 
 ### Abas principais
 
 | Aba | Conteúdo |
 |---|---|
-| **Mesa** | primeiros passos (nas três primeiras temporadas), acontecimentos, metas da temporada, casos que passaram pela diretriz, pendências dos craques, termômetro do mercado com tendência, corrida das agências, o que a equipe fez, botão de rodar a temporada |
-| **Clientes** | lista com nível, valor, contrato e confiança; chips de diretriz; ação direta na linha |
-| **Nomes** | quem o escritório trouxe; assinar e sondar em um toque; filtros e ordenação |
-| **Análise** | gráficos de caixa e receita e da corrida das agências, painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
-| **Escritório** | sede, estrutura, marcos, ranking, notícias |
+| **Mesa** | primeiros passos (três primeiras temporadas), acontecimentos, metas da temporada, propostas que passaram pela diretriz, pendências dos craques, termômetro do mercado, corrida das agências, o que a equipe fez, botão de rodar a temporada |
+| **Clientes** | craques com você e clientes com a equipe, em seções; estrela para marcar craque; nível, valor, contrato, confiança com rosto de humor; seletor de diretriz; ação direta na linha; quem já foi seu |
+| **Nomes** | quem o escritório trouxe; aviso de rival de olho; assinar e sondar em um toque; filtros e ordenação |
+| **Análise** | gráfico de caixa e receita, gráfico da corrida das agências, painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
+| **Escritório** | sede (com valor da agência e venda), estrutura, marcos, ranking, notícias |
+
+A barra de baixo tem ícones desenhados (SVG) e mostra o número de pendências na Mesa.
 
 ### Ficha do jogador
 
 | Aba | Conteúdo |
 |---|---|
-| **Resumo** | números e pendências |
-| **Carreira** | gráficos de nível (com o teto) e de valor de mercado, prêmios, temporadas, conta aberta do valor, leitura |
-| **Negociar** | propostas, empréstimo, renovação, conversa, rescisão |
+| **Resumo** | números, quem cuida (você ou a equipe), diretriz, confiança, pendências |
+| **Carreira** | gráfico de nível (com o teto tracejado), gráfico de valor de mercado, prêmios, temporadas, conta aberta do valor, leitura |
+| **Negociar** | assédio, propostas, empréstimo, mesa de renovação, conversa, rescisão, extrato de confiança |
 
 ### Rodar a temporada
-O botão revela a temporada cliente a cliente (jogos, gols e nota subindo, prêmio e lesão em
-destaque) antes do relatório. Dá para pular. Com "reduzir movimento" ligado no aparelho, vai
-direto ao relatório. Cada cliente tem um rosto de humor (pela confiança) na lista e na Mesa.
+
+O botão revela a temporada cliente a cliente: jogos, gols e nota sobem, prêmio ganha borda
+dourada e lesão, borda vermelha. Dá para pular direto ao relatório. Com "reduzir movimento"
+ligado no aparelho, vai direto ao relatório.
+
+O relatório abre com três destaques (faturamento, variação do caixa, movimento no ranking) e
+traz caixa, clientes, metas, janela de transferências, equipe e acontecimentos. Pode ser reaberto
+em Escritório → Notícias.
 
 ### Custo em toques
 
@@ -344,21 +405,29 @@ direto ao relatório. Cada cliente tem um rosto de humor (pela confiança) na li
 |---|---|
 | Sondar | 1 |
 | Assinar | 1 |
-| Renovar | 2 |
+| Trocar diretriz ou marcar craque | 1 |
+| Responder acontecimento | 1 |
+| Renovar | 2 ou mais |
 | Avaliar e fechar proposta | 2 |
 
 ---
 
-## 9. Fórmulas
+## 11. Fórmulas
 
 ```
-valor        = 6,5 · (fama/50)^2,6 · fatorIdade · fatorLiga · fatorContrato · ciclo
-salárioJusto = 0,5 · ECO[liga] · (fama/55)^2,3 · (0,8 + nível/230)
-imagem       = 0,035 · ECO · (fama/55)^2,6 · (1 + assessoria·0,5)    [sua parte: 20%]
+valor         = 6,5 · (fama/50)^2,6 · fatorIdade · fatorLiga · fatorContrato · ciclo
+salárioJusto  = 0,5 · ECO[liga] · (fama/55)^2,3 · (0,8 + nível/230)
+imagem        = 0,035 · ECO · (fama/55)^2,6 · (1 + assessoria·0,5)    [sua parte: 20%]
 
-minutos      = base(status) · ajuste(nível vs nível do clube) · sorte
-evolução     = base(idade) · (0,2 + minutos) · suporte
-fama        += (ref da liga + (nota − 6,1)·20 + palco − fama) · peso(minutos, palco)
+minutos       = base(status) · ajuste(nível vs nível do clube) · sorte
+evolução      = base(idade) · (0,2 + minutos) · suporte
+fama         += (ref da liga + (nota − 6,1)·20 + palco − fama) · peso(minutos, palco)
+
+renda         = comissão anual sobre salários + sua parte da imagem
+valorAgência  = caixa + 6 · renda + 0,08 · carteira + 0,05 · reputação
+meta          = paga 18% a 30% da renda (arredondado) e 1–2 de reputação; bônus de 25% da renda pelas três
+rival         = faturamento anual · (1,205 a 1,255 + ruído) · variação do ciclo, por temporada
+qualiEquipe   = 0,78 + 0,05 · jurídico    (multiplica a chance de renovação da equipe)
 ```
 
 **fatorIdade**
@@ -369,7 +438,22 @@ fama        += (ref da liga + (nota − 6,1)·20 + palco − fama) · peso(minut
 
 ---
 
-## 10. Backlog
+## 12. Desenvolvimento
+
+- Tudo está em `index.html`: estilo, dados do mundo, regras e telas. Não há build.
+- Para testar localmente: `python3 -m http.server` na pasta e abrir `http://localhost:8000/`
+  (o service worker não roda abrindo o arquivo direto).
+- A cada mudança publicada, suba a versão `CACHE` em `sw.js` para o app instalado trocar o cache.
+- Saves antigos continuam valendo: o carregamento completa os campos novos (rivais, metas,
+  acontecimentos) quando faltam.
+- As mudanças desta rodada foram validadas com bots no navegador (Playwright): um que joga
+  carreiras inteiras para medir o equilíbrio, um que clica em botões aleatórios e um que audita
+  o estado do jogo a cada temporada em carreiras de 80 temporadas. Os bots não estão no
+  repositório.
+
+---
+
+## 13. Backlog
 
 Itens pesquisados e ainda não implementados.
 
@@ -383,7 +467,7 @@ Itens pesquisados e ainda não implementados.
 
 ---
 
-## 11. Histórico de decisões
+## 14. Histórico de decisões
 
 | Fase | O que foi | Por que mudou |
 |---|---|---|
@@ -391,3 +475,25 @@ Itens pesquisados e ainda não implementados.
 | Rodada a rodada | temporada simulada em 14 rodadas, com tabela, artilharia e olheiro escalado para jogos | análise de partida não interessa |
 | Molde Fundo de Clubes | conta aberta na tela, ativo com perfil de indicadores, alavancas que levam temporadas, temporada que fecha em relatório, rivais agindo sozinhos, ciclo de mercado, benchmark e ranking | base da versão atual |
 | Gestão por diretriz | a janela passou a ser resolvida por diretrizes | oito clientes com proposta mostraram que aprovar caso a caso é burocracia, não jogo |
+| Rivais que crescem | rivais com crescimento composto, ligadas ao ciclo, que se fortalecem com o que tiram de você | um bot simples terminava em 1º quase sempre; o ranking não era disputa |
+| Limites por janela | conversar, segurar e renovar passaram a ter limite por janela | dava para repetir o clique até dar certo |
+| Equipe e craques | a partir da sala alugada a equipe cuida da rotina; você só dos craques | com muitos clientes, tomar todas as decisões ficava chato e o jogador parava de jogar |
+| Metas e acontecimentos | três metas curtas e até duas cartas de escolha por janela | cada temporada precisava de um motivo próprio e de variedade |
+| Fim sem prazo | carreira sem limite de temporadas, encerrada pela venda da agência | uma agência dura mais que a carreira de uma pessoa |
+
+---
+
+## 15. Histórico de versões
+
+Datas de 2026.
+
+| Data | Versão | O que mudou |
+|---|---|---|
+| 26/10 | Documentação | README organizado por tema, com índice e tabelas |
+| 26/10 | App | instalável (PWA), offline, ícone, botão de instalar, publicação no GitHub Pages |
+| 27/10 | Equilíbrio e layout | rivais crescendo; limites por janela; empréstimo de uma temporada; ícones SVG; primeiros passos; termômetro do mercado; corrida das agências; diretriz em seletor de uma linha; mesa de renovação compacta; destaques no relatório |
+| 27/10 | Equipe e craques | equipe para os clientes fora dos craques; diretriz padrão aplicada a quem assina; nomes únicos |
+| 27/10 | Correção | botão Desistir na Mesa não funcionava |
+| 27/10 | Metas e acontecimentos | metas da temporada; acontecimentos; disputa pelos garotos; venda da agência; temporada com suspense; gráficos; rosto de humor |
+| 27/10 | Correções | empréstimo cancela propostas e não renova com o clube do empréstimo (em todas as telas); botão de transferência com o destino certo; pendência fantasma; aviso apontando a proposta errada; erro ao tocar proposta que sumiu |
+| 27/10 | Auditoria | acontecimento que perde a validade; equipe não empresta quem tem proposta grande; encerrar relação limpa as propostas |
