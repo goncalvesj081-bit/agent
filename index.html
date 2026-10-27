@@ -1963,7 +1963,7 @@ document.addEventListener('click',function(ev){
     if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg={id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
     return;
   }
-  if(d.desiste){aval=null;renderSheet();return;}
+  if(d.desiste){aval=null;render();return;}
   if(d.forca){
     var pv=d.forca.split(':'),pj=porId(+pv[0]),ofv=S.props[+pv[0]][+pv[1]];
     if(pj&&ofv){
