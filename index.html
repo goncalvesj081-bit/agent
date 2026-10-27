@@ -1596,7 +1596,8 @@ function vCli(){
       segPlano(p)+
       (temEquipe()&&!cq&&!temProp?'':'<div class="ofr-act" style="margin-top:9px">'+
       (temProp?'<button class="btn sec" data-pn="'+p.id+'">Ver '+temProp+' proposta'+(temProp>1?'s':'')+'</button>':
-       '<button class="btn sec" data-pren="'+p.id+'">'+(venc?'Renovar contrato':'Negociar contrato')+'</button>')+
+       (p.emprest?'<span class="hint" style="flex:1">Emprestado: volta ao '+esc(clube(p.emprest.de).n)+' na virada e renova lá.</span>':
+        '<button class="btn sec" data-pren="'+p.id+'">'+(venc?'Renovar contrato':'Negociar contrato')+'</button>'))+
       (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
        (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
       '</div>')+'</div>';
@@ -1913,7 +1914,7 @@ function fRes(p,meu,c,f,fp){
         avisos.map(function(a){return '<div class="nw"><b class="'+a[1]+'">'+esc(a[0])+'</b></div>';}).join('')+
         '<div class="ofr-act" style="margin-top:10px">'+
         ((S.props[p.id]||[]).length?'<button class="btn" data-fa="neg">Ver propostas</button>':
-          '<button class="btn" data-pren="'+p.id+'">Negociar contrato</button>')+
+          (p.emprest?'':'<button class="btn" data-pren="'+p.id+'">Negociar contrato</button>'))+
         (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
          (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
         '</div></div></div>';
@@ -2272,7 +2273,8 @@ document.addEventListener('click',function(ev){
   if(d.pn){aberto=+d.pn;fichaAba='neg';neg=null;aval=null;renderSheet();return;}
   if(d.pren){
     var pj0=porId(+d.pren);
-    if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg=pj0.emprest?null:{id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
+    if(pj0&&pj0.emprest){toast(esc(pj0.nome)+' está emprestado. A renovação é com o '+esc(clube(pj0.emprest.de).n)+', quando ele voltar.');return;}
+    if(pj0){aberto=pj0.id;fichaAba='neg';aval=null;neg={id:pj0.id,prop:propostaBase(pj0)};renderSheet();}
     return;
   }
   if(d.desiste){aval=null;render();return;}
