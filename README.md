@@ -322,7 +322,14 @@ dica: vender no aquecido e na euforia, assinar no frio e na crise.
 
 - Escala de 0 a 100, com extrato das últimas oito mudanças (cada uma com motivo e sinal).
 - Um rosto de humor, pela confiança, aparece na lista de clientes e na Mesa.
-- **Abaixo de 35**, ele começa a procurar outra agência.
+- **Abaixo de 45**, ele pode trocar de agência na virada: o risco cresce quanto menor a confiança,
+  e sobe com exigência em aberto (+12 pontos) e assédio de rival (+22 pontos). O suporte ao atleta
+  reduz.
+- A Mesa mostra o card **Risco de perder clientes**, com a chance de cada um trocar de agência
+  (e o motivo) e a chance de se aposentar na virada.
+- Quem sai aparece com destaque: na revelação da temporada, num card vermelho **Saíram da sua
+  agência** no topo do relatório e da Mesa (motivo, rival, valor, quanto rendeu e quanto deixa
+  de render por ano), e no destaque do relatório (clientes −N).
 
 | Evento | Efeito |
 |---|---|
@@ -451,7 +458,7 @@ clientes e sem caixa para ir atrás de outro.
 
 | Aba | Conteúdo |
 |---|---|
-| **Mesa** | primeiros passos (três primeiras temporadas), acontecimentos, Copa do Mundo (no ano da Copa), metas da temporada, propostas que passaram pela diretriz, pendências dos craques, termômetro do mercado, corrida das agências, o que a equipe fez, botão de rodar a temporada |
+| **Mesa** | quem saiu na última virada, primeiros passos (três primeiras temporadas), acontecimentos, risco de perder clientes, Copa do Mundo (no ano da Copa), metas da temporada, propostas que passaram pela diretriz, pendências dos craques, termômetro do mercado, corrida das agências, o que a equipe fez, botão de rodar a temporada |
 | **Clientes** | craques com você e clientes com a equipe, em seções; estrela para marcar craque; nível, valor, contrato, confiança com rosto de humor; seletor de diretriz; ação direta na linha; quem já foi seu |
 | **Nomes** | quem o escritório trouxe; aviso de rival de olho; garotos da sua academia; assinar e sondar em um toque; filtros e ordenação |
 | **Análise** | gráfico de caixa e receita, gráfico da corrida das agências, painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
@@ -593,3 +600,4 @@ Datas de 2026.
 | 27/10 | Dificuldade | rivais perseguem o seu faturamento; a líder vira alvo (mais assédio, mais disputa por garotos, rivais investindo) |
 | 27/10 | Copa, pré-contrato e mais | Copa do Mundo; pré-contrato (Bosman) e fim de contrato com consequência; academia; direitos econômicos; dificuldade; rivais com manchetes; backup da carreira |
 | 27/10 | Visual | confirmações e campos de texto em janela própria do jogo, no lugar das caixas do navegador |
+| 27/10 | Saídas | risco de perder clientes na Mesa; quem saiu aparece na revelação, no topo do relatório e da Mesa |

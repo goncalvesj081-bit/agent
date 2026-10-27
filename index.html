@@ -184,6 +184,16 @@ nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
 .nw.riv{color:var(--mut)}
 .nw.riv b{color:var(--info)}
 
+.risco{border-color:var(--warn)}
+.risco .card-h h2{color:var(--warn)}
+.saidas{border-color:var(--neg)}
+.saidas .card-h h2{color:var(--neg)}
+.susp-l.saiu{border-color:var(--neg)}
+.hero.q4{grid-template-columns:repeat(4,1fr);gap:5px}
+.hero.q4 div{padding:9px 7px 8px}
+.hero.q4 b{font-size:14.5px}
+.hero.q4 small.mut{display:none}
+
 /* janela de dialogo do jogo */
 .dlg{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
 .dlg.on{display:flex}
@@ -664,6 +674,10 @@ function limparConfLog(S2){
   });
   (S2.pool||[]).forEach(function(p){delete p.confLog;});
 }
+/* chance de o cliente trocar de agencia quando a temporada rodar */
+function riscoSaida(p){return cl(cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04,0,0.95);}
+/* chance de aposentar na virada (a idade sobe antes do sorteio) */
+function riscoAposentar(p){return p.idade+1<33?0:cl((p.idade+1-32)*0.24,0,0.9);}
 function nivelConf(v){return v>=75?'te trata como família':(v>=55?'confia em você':(v>=35?'está desconfiado':'com um pé fora'));}
 
 /* ---------- premios ---------- */
@@ -1052,7 +1066,7 @@ function campanha(){
 }
 function rodarTemporada(){
   S.evs=[];
-  var posAnt=posicao(),caixaAnt=S.caixa,lider=posAnt===1,copaRes=null;
+  var posAnt=posicao(),caixaAnt=S.caixa,lider=posAnt===1,copaRes=null,saidas=[];
   /* contrato vencido que ninguem resolveu na janela: ele fica livre e assina com quem aparece */
   S.clientes.forEach(function(p){
     if(p.emprest||p.pre||p.ct.ate>S.temp)return;
@@ -1160,6 +1174,7 @@ function rodarTemporada(){
     S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
     liquidarDir(p,'aposentou');
     p.aposentado=S.temp;S.exCli.push(p);
+    saidas.push({n:p.nome,pos:p.pos,motivo:'aposentou',idade:p.idade,temps:S.temp-p.desde,rendeu:p.rendeu||0,renda:p.ct.sal*taxaCom()+imagemDe(p)*0.2});
     S.rep=cl(S.rep+1.2,0,100);
     S.evs.push({t:'<b>'+esc(p.nome)+'</b> pendurou as chuteiras aos '+p.idade+' anos. Em '+(S.temp-p.desde)+' temporadas com você, rendeu '+din(p.rendeu||0)+'.',k:'big'});
     if(Math.random()<0.45){
@@ -1181,13 +1196,13 @@ function rodarTemporada(){
   /* clientes que cansam de esperar */
   var perdidos=[];
   S.clientes.slice().forEach(function(p){
-    var risco=cl((45-p.conf)/55,0,0.75)+(p.exig?0.12:0)+(p.assedio?0.22:0)-niv('psi')*0.04;
-    if(Math.random()<risco){
+    if(Math.random()<riscoSaida(p)){
       var ag=p.assedio?p.assedio.ag:pick(AGENCIAS);p.agencia=ag;
       liquidarDir(p,'saiu');
       var rv=rivalDe(ag);if(rv){var ganho=p.ct.sal*0.07+imagemDe(p)*0.2;rv.ano+=ganho;if(rv.base!==undefined)rv.base+=ganho;}
       S.clientes=S.clientes.filter(function(x){return x.id!==p.id;});
       S.exCli.push(p);perdidos.push(p);
+      saidas.push({n:p.nome,pos:p.pos,motivo:'rival',ag:ag,val:valor(p),renda:p.ct.sal*taxaCom()+imagemDe(p)*0.2,rendeu:p.rendeu||0,conf:Math.round(p.conf),assedio:!!p.assedio});
       S.evs.push({t:'<b>'+esc(p.nome)+'</b> cansou de esperar e assinou com a '+ag+'.',k:'bad'});
       S.rep=cl(S.rep-0.6,0,100);
     }
@@ -1247,7 +1262,7 @@ function rodarTemporada(){
   if(S.exCli.length>14)S.exCli=S.exCli.slice(-14);
   S.rel={t:S.temp,det:det,rel:rel,evs:S.evs,rec:S.recTemp,caixa:S.caixa,
          props:Object.keys(S.props).length,perdidos:perdidos.length,janela:S.janela,
-         pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt,copa:copaRes,rivais:riv};
+         pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt,copa:copaRes,rivais:riv,saidas:saidas};
   S.recTemp=0;S.temp++;S.sondUsadas=0;S.emps={};S.renovTent={};S.pres={};
   S.rel.equipe=(S.janela.equipe||[]).concat(equipeTrabalha());
   S.rel.metas=S.metasRes;
@@ -1752,8 +1767,49 @@ function vCopa(){
     (l.length?l.map(function(x){return '<div class="i-sub" style="margin:0 0 5px"><span>'+esc(x.p.nome)+' · '+stNome(x.p.status)+'</span><b style="color:'+(x.ch>=0.5?'var(--ac)':'var(--tx)')+'">'+pc(x.ch)+'</b></div>';}).join(''):
       '<p class="hint" style="margin:0">Nenhum cliente seu está perto da seleção.</p>')+'</div></div>';
 }
+function motivosRisco(p){
+  var m=[];
+  if(p.assedio)m.push('a '+p.assedio.ag+' está em cima dele');
+  if(p.conf<45)m.push('confiança '+Math.round(p.conf));
+  if(p.exig)m.push(p.exig.txt);
+  return m;
+}
+function vRisco(){
+  var l=S.clientes.map(function(p){return {p:p,r:riscoSaida(p),a:riscoAposentar(p)};})
+    .filter(function(x){return x.r>=0.08||x.a>0;}).sort(function(a,b){return (b.r+b.a)-(a.r+a.a);});
+  if(!l.length)return '';
+  return '<div class="card risco"><div class="card-h"><h2>Risco de perder clientes</h2><span>na próxima virada</span></div>'+
+    l.map(function(x){
+      var p=x.p,c=clube(p.clube),mot=motivosRisco(p);
+      return '<div class="item" data-p="'+p.id+'"><div style="display:flex;gap:9px;align-items:center">'+escudo(c,30)+
+        '<div style="flex:1;min-width:0"><div class="i-top"><div><span class="i-pos">'+p.pos+'</span><span class="i-nm">'+esc(p.nome)+'</span></div>'+
+        '<div class="i-val" style="font-size:13px">'+rosto(p.conf,15)+'</div></div>'+
+        (x.r>=0.08?'<div class="i-sub"><span class="neg">'+pc(x.r)+' de trocar de agência</span><span>'+din(valor(p))+'</span></div>'+
+          (mot.length?'<div class="i-sub" style="margin-top:2px"><span>'+esc(mot.join(' · '))+'</span></div>':''):'')+
+        (x.a>0?'<div class="i-sub"><span class="wrn">'+pc(x.a)+' de se aposentar · '+p.idade+' anos</span></div>':'')+
+        '</div></div></div>';
+    }).join('')+
+    '<div class="card-b hint">Confiança acima de 45 zera o risco de troca. Segure quem está sendo assediado, converse, renove e dê minutos.</div></div>';
+}
+function vSaidas(){
+  var b=S.rel;
+  if(!b||b.t!==S.temp-1||!b.saidas||!b.saidas.length)return '';
+  return cardSaidas(b.saidas);
+}
+function cardSaidas(l){
+  var nr=l.filter(function(x){return x.motivo==='rival';}).length,perdaAno=0;
+  l.forEach(function(x){perdaAno+=x.renda||0;});
+  return '<div class="card saidas"><div class="card-h"><h2>Saíram da sua agência</h2><span>'+l.length+' cliente'+(l.length>1?'s':'')+'</span></div>'+
+    l.map(function(x){
+      return '<div class="card-b" style="border-bottom:1px solid var(--line)"><div class="i-top"><div><span class="i-pos">'+x.pos+'</span><span class="i-nm">'+esc(x.n)+'</span></div>'+
+        '<div class="i-val" style="font-size:13px">'+(x.motivo==='rival'?'<span class="neg">→ '+esc(x.ag)+'</span>':'<span class="wrn">aposentou</span>')+'</div></div>'+
+        '<div class="i-sub"><span>'+(x.motivo==='rival'?(x.assedio?'assediado e ':'')+'cansou de esperar · confiança '+x.conf+' · valia '+din(x.val):x.idade+' anos · '+x.temps+' temporadas com você')+'</span></div>'+
+        '<div class="i-sub"><span>rendeu '+din(x.rendeu)+' no total · deixa de render '+din(x.renda||0)+'/ano</span></div></div>';
+    }).join('')+
+    '<div class="card-b hint">'+(nr?'Perda de receita recorrente: <b class="neg">'+din(perdaAno)+'/ano</b>. Quem sai fortalece a rival.':'Aposentadoria dá reputação e, às vezes, a indicação de um garoto.')+'</div></div>';
+}
 function vMesa(){
-  var h=vPassos()+vEventos()+vCopa()+vMetas();
+  var h=vSaidas()+vPassos()+vEventos()+vRisco()+vCopa()+vMetas();
   /* propostas resolvidas em lote, sem entrar em ficha */
   var comProp=S.clientes.filter(function(p){return (S.props[p.id]||[]).length;});
   if(comProp.length){
@@ -2184,7 +2240,7 @@ function fRes(p,meu,c,f,fp){
     h+='<div class="card"><div class="card-h"><h2>Diretriz na janela</h2><span>'+PLANOS.filter(function(x){return x.id===planoDe(p);})[0].d+'</span></div><div class="card-b">'+
       segPlano(p)+'</div></div>';
     h+='<div class="card"><div class="card-h"><h2>Confiança</h2><span>'+nivelConf(p.conf)+'</span></div><div class="card-b">'+
-      '<div class="i-sub" style="margin:0 0 4px"><span>'+Math.round(p.conf)+' de 100</span><span>sai abaixo de 35</span></div>'+
+      '<div class="i-sub" style="margin:0 0 4px"><span>'+Math.round(p.conf)+' de 100</span><span'+(riscoSaida(p)>=0.08?' class="neg"':'')+'>'+(riscoSaida(p)>0?pc(riscoSaida(p))+' de risco de sair':'risco de sair abaixo de 45')+'</span></div>'+
       barra(p.conf,corConf(p.conf))+'</div></div>';
     var avisos=[];
     if(p.assedio)avisos.push(['a '+p.assedio.ag+' está em cima dele','neg']);
@@ -2403,7 +2459,7 @@ var tSusp=[];
 function abrirSuspense(){
   var b=S.rel,l=b.rel.slice().sort(function(a,c){return c.val-a.val;}),mostra=l.slice(0,8);
   var calmo=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!mostra.length||calmo){abrirRel();return;}
+  if((!mostra.length&&!(b.saidas||[]).length)||calmo){abrirRel();return;}
   $('#sheet-t').textContent='Temporada '+b.t+' em andamento';
   var h='<div class="susp">'+mostra.map(function(r,i){
     var c=clube(r.c);
@@ -2412,6 +2468,10 @@ function abrirSuspense(){
       '<div class="sn"><span>nota</span><b data-alvo="'+r.nota.toFixed(2)+'" data-d="2">0,00</b></div>'+
       '<div class="tag-s">'+(r.grave?'<span class="tg bad">lesão grave</span>':'')+(r.prem&&r.prem.length?'<span class="tg top">★ '+esc(r.prem[0])+'</span>':'')+'</div></div>';
   }).join('')+(l.length>mostra.length?'<p class="hint" style="text-align:center">e mais '+(l.length-mostra.length)+' cliente'+(l.length-mostra.length>1?'s':'')+'</p>':'')+
+  (b.saidas||[]).map(function(x,i){
+    return '<div class="susp-l saiu" id="ss'+i+'"><div class="nm"><b>'+esc(x.n)+'</b><span>'+(x.motivo==='rival'?'trocou você pela '+esc(x.ag):'pendurou as chuteiras')+'</span></div>'+
+      '<span class="tg '+(x.motivo==='rival'?'bad':'')+'">'+(x.motivo==='rival'?'saiu':'aposentou')+'</span></div>';
+  }).join('')+
   '</div><button class="btn" id="btn-versrel" style="margin-top:14px">Pular para o relatório</button>';
   $('#sheet-b').innerHTML=h;$('#sheet').classList.add('on');aberto=null;relAberto=true;
   tSusp.forEach(clearTimeout);tSusp=[];
@@ -2427,7 +2487,10 @@ function abrirSuspense(){
       if(r.grave)el.classList.add('mal');if(r.prem&&r.prem.length)el.classList.add('bem');
     },300+i*passo));
   });
-  tSusp.push(setTimeout(function(){var bt=$('#btn-versrel');if(bt)bt.textContent='Ver o relatório';},300+mostra.length*passo+500));
+  (b.saidas||[]).forEach(function(x,i){
+    tSusp.push(setTimeout(function(){var el=$('#ss'+i);if(el)el.classList.add('on');},300+(mostra.length+i)*passo+200));
+  });
+  tSusp.push(setTimeout(function(){var bt=$('#btn-versrel');if(bt)bt.textContent='Ver o relatório';},300+(mostra.length+(b.saidas||[]).length)*passo+500));
 }
 function venderAgencia(){
   var v=valorAgencia(),t=tituloDe(v);
@@ -2458,12 +2521,14 @@ function abrirRel(){
   if(S.fim)h+='<h1>Acabou</h1><p class="lead">'+S.fim+'</p>';
   if(b.pos){
     var sb=b.posAnt-b.pos;
-    h+='<div class="hero">'+
+    h+='<div class="hero'+(b.saidas&&b.saidas.length?' q4':'')+'">'+
       '<div><span>faturou</span><b class="pos">'+din(b.rec)+'</b><small class="mut">na temporada</small></div>'+
       '<div><span>caixa</span><b>'+din(b.caixa)+'</b><small class="'+(b.dCaixa>=0?'pos':'neg')+'">'+(b.dCaixa>=0?'+':'')+din(b.dCaixa)+'</small></div>'+
-      '<div><span>ranking</span><b>'+b.pos+'º</b><small class="'+(sb>0?'pos':(sb<0?'neg':'mut'))+'">'+(sb>0?'↑ subiu '+sb:(sb<0?'↓ caiu '+(-sb):'manteve'))+'</small></div>'+
+      '<div><span>'+(b.saidas&&b.saidas.length?'clientes':'ranking')+'</span>'+(b.saidas&&b.saidas.length?
+        '<b class="neg">−'+b.saidas.length+'</b><small class="neg">saíram</small></div><div><span>ranking</span>':'')+'<b>'+b.pos+'º</b><small class="'+(sb>0?'pos':(sb<0?'neg':'mut'))+'">'+(sb>0?'↑ subiu '+sb:(sb<0?'↓ caiu '+(-sb):'manteve'))+'</small></div>'+
       '</div>';
   }
+  if(b.saidas&&b.saidas.length)h+=cardSaidas(b.saidas);
   h+='<div class="card"><div class="card-h"><h2>Caixa</h2><span>'+din(b.rec)+' faturados</span></div><div class="card-b">'+
     b.det.map(function(d){return '<div class="kv"><span>'+esc(d[0])+'</span><b class="'+(d[1]>=0?'pos':'neg')+'">'+din(d[1])+'</b></div>';}).join('')+
     '<div class="kv"><span>Caixa agora</span><b>'+din(b.caixa)+'</b></div>'+
