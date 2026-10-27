@@ -271,16 +271,58 @@ Chance de ~2% por temporada, que sobe com a idade. Derruba jogos, nível e fama 
 
 ---
 
+## 7b. Metas, acontecimentos e fim de carreira
+
+### Metas da temporada
+Cada janela traz três metas curtas, na escala da agência: fechar uma transferência acima de um
+valor, assinar clientes, renovar contratos, terminar com certo caixa, faturar um tanto, ter
+clientes na Série A ou na Europa, ninguém abaixo de 55 de confiança, um prêmio individual. Cada
+meta paga dinheiro (entra como receita) e 1 ou 2 de reputação; cumprir as três dá um bônus.
+O resultado sai no relatório.
+
+### Acontecimentos
+Até dois por janela, a partir da segunda temporada, como cartas com escolha:
+
+| Acontecimento | Escolhas |
+|---|---|
+| Cliente flagrado numa festa | defender em público (reputação −1,5, confiança +7) · bronca em particular · deixar quieto (confiança −5) |
+| Marca quer o cliente como garoto-propaganda | fechar pelo valor · pedir quase o dobro (55%) · recusar |
+| Pai do cliente pede adiantamento | adiantar (caixa, confiança +9) · negar (confiança −6) |
+| Clube quer renovar agora, 10% acima do mercado e 4 anos | aceitar · esperar |
+| Programa de TV quer entrevistar você | ir (70% reputação +1,5, 30% −1) · recusar |
+| Treinador de base tem um garoto especial | pagar e receber um nome bem conhecido · dispensar |
+
+Rodar a temporada sem responder aplica a última opção.
+
+### Disputa pelos garotos
+Na aba Nomes, alguns garotos sem agente aparecem com uma rival "de olho". Se você não assinar
+nessa janela, há 60% de chance de a rival levar, e ela fica mais forte.
+
+### Fim de carreira
+Não há prazo: a agência dura o quanto você quiser. A partir da temporada 10 dá para **vender a
+agência**. O valor da agência é caixa + 6× a renda recorrente + 8% da carteira + reputação, e
+define o título:
+
+| Valor | Título |
+|---|---|
+| até R$ 5 mi | Agente de bairro |
+| R$ 5 mi | Agência regional |
+| R$ 30 mi | Agência nacional |
+| R$ 150 mi | Potência internacional |
+| R$ 500 mi | Lenda do mercado |
+
+A melhor venda fica gravada e aparece na tela inicial.
+
 ## 8. Telas
 
 ### Abas principais
 
 | Aba | Conteúdo |
 |---|---|
-| **Mesa** | primeiros passos (nas três primeiras temporadas), termômetro do mercado com tendência, corrida das agências, casos que passaram pela diretriz, pendências, botão de rodar a temporada |
+| **Mesa** | primeiros passos (nas três primeiras temporadas), acontecimentos, metas da temporada, casos que passaram pela diretriz, pendências dos craques, termômetro do mercado com tendência, corrida das agências, o que a equipe fez, botão de rodar a temporada |
 | **Clientes** | lista com nível, valor, contrato e confiança; chips de diretriz; ação direta na linha |
 | **Nomes** | quem o escritório trouxe; assinar e sondar em um toque; filtros e ordenação |
-| **Análise** | painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
+| **Análise** | gráficos de caixa e receita e da corrida das agências, painel da agência, principal ativo, melhores investimentos (ROI), valorização desde a assinatura, de onde veio o dinheiro, pipeline, trajetória |
 | **Escritório** | sede, estrutura, marcos, ranking, notícias |
 
 ### Ficha do jogador
@@ -288,8 +330,13 @@ Chance de ~2% por temporada, que sobe com a idade. Derruba jogos, nível e fama 
 | Aba | Conteúdo |
 |---|---|
 | **Resumo** | números e pendências |
-| **Carreira** | evolução, prêmios, temporadas, conta aberta do valor, leitura |
+| **Carreira** | gráficos de nível (com o teto) e de valor de mercado, prêmios, temporadas, conta aberta do valor, leitura |
 | **Negociar** | propostas, empréstimo, renovação, conversa, rescisão |
+
+### Rodar a temporada
+O botão revela a temporada cliente a cliente (jogos, gols e nota subindo, prêmio e lesão em
+destaque) antes do relatório. Dá para pular. Com "reduzir movimento" ligado no aparelho, vai
+direto ao relatório. Cada cliente tem um rosto de humor (pela confiança) na lista e na Mesa.
 
 ### Custo em toques
 
