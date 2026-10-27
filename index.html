@@ -184,6 +184,27 @@ nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
 .nw.riv{color:var(--mut)}
 .nw.riv b{color:var(--info)}
 
+/* janela de dialogo do jogo */
+.dlg{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.dlg.on{display:flex}
+.dlg-fundo{position:absolute;inset:0;background:rgba(3,6,10,.62);animation:dlgf .15s ease-out}
+.dlg-cx{position:relative;width:100%;max-width:440px;background:var(--sur);border:1px solid var(--line2);border-radius:14px;padding:18px 16px 14px;box-shadow:0 18px 50px rgba(0,0,0,.5);animation:dlgc .18s ease-out}
+.dlg-cx h3{margin:0 0 6px;font-size:17px;font-weight:650;line-height:1.3}
+.dlg-cx p{margin:0 0 8px;font-size:14px;color:var(--mut);line-height:1.5}
+.dlg-cx p b{color:var(--tx)}
+.dlg-cx ul{margin:2px 0 10px;padding:0;list-style:none}
+.dlg-cx li{font-size:14px;padding:7px 10px;margin-bottom:5px;background:var(--sur2);border-radius:7px;border-left:3px solid var(--neg)}
+.dlg-cx .dlg-nota{font-size:12.5px;margin-top:4px}
+.dlg-cx .dlg-nota.neg{color:var(--warn)}
+.dlg-cx input,.dlg-cx textarea{width:100%;padding:11px 12px;border-radius:8px;background:var(--sur2);border:1px solid var(--line2);color:var(--tx);font:inherit;margin:4px 0 10px}
+.dlg-cx textarea{font:11.5px/1.4 ui-monospace,monospace;resize:none}
+.dlg-bt{display:flex;gap:8px;margin-top:8px}
+.dlg-bt .btn{flex:1;margin:0}
+.btn.perigo{background:var(--neg);color:#fff}
+@keyframes dlgf{from{opacity:0}}
+@keyframes dlgc{from{transform:translateY(18px);opacity:.4}}
+@media (min-width:600px){.dlg{align-items:center}}
+
 /* craques e equipe */
 .sec-h{padding:9px 13px 7px;font-size:11.5px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--mut);background:var(--sur2);border-bottom:1px solid var(--line)}
 .sec-h span{font-weight:500;text-transform:none;letter-spacing:0;margin-left:6px;color:var(--mut2)}
@@ -2495,6 +2516,33 @@ function abrirRel(){
   aberto=null;relAberto=true;
 }
 
+/* =================== janela de dialogo ===================
+   Substitui confirm/prompt do navegador. o: {titulo, texto, itens[], nota, ok, cancelar,
+   perigo, campo:{valor,max}, codigo} · aoOk recebe o texto do campo, quando houver. */
+function dialogo(o,aoOk){
+  var el=$('#dlg');
+  if(!el){el=document.createElement('div');el.id='dlg';el.className='dlg';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);}
+  el.innerHTML='<div class="dlg-fundo"></div><div class="dlg-cx">'+
+    '<h3>'+o.titulo+'</h3>'+
+    (o.texto?'<p>'+o.texto+'</p>':'')+
+    (o.itens&&o.itens.length?'<ul>'+o.itens.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>':'')+
+    (o.campo?'<input id="dlg-in" type="text" maxlength="'+(o.campo.max||40)+'" value="'+esc(o.campo.valor||'')+'">':'')+
+    (o.codigo?'<textarea id="dlg-cod" rows="5" readonly>'+esc(o.codigo)+'</textarea>':'')+
+    (o.nota?'<p class="dlg-nota'+(o.perigo?' neg':'')+'">'+o.nota+'</p>':'')+
+    '<div class="dlg-bt">'+(o.cancelar===false?'':'<button class="btn sec" id="dlg-no">'+(o.cancelar||'Cancelar')+'</button>')+
+    '<button class="btn'+(o.perigo?' perigo':'')+'" id="dlg-ok">'+(o.ok||'Confirmar')+'</button></div></div>';
+  el.classList.add('on');
+  var fecha=function(){el.classList.remove('on');el.innerHTML='';document.removeEventListener('keydown',tecla);};
+  var tecla=function(e){if(e.key==='Escape')fecha();if(e.key==='Enter'&&o.campo){e.preventDefault();$('#dlg-ok').click();}};
+  document.addEventListener('keydown',tecla);
+  el.querySelector('.dlg-fundo').addEventListener('click',fecha);
+  if($('#dlg-no'))$('#dlg-no').addEventListener('click',fecha);
+  $('#dlg-ok').addEventListener('click',function(){var v=o.campo?$('#dlg-in').value:null;fecha();if(aoOk)aoOk(v);});
+  if(o.campo){var i=$('#dlg-in');i.focus();i.select();}
+  else if(o.codigo){var c=$('#dlg-cod');c.focus();c.select();}
+  else $('#dlg-ok').focus();
+}
+
 /* =================== backup =================== */
 function backupTexto(){return JSON.stringify({app:'agente',v:3,em:new Date().toISOString().slice(0,10),save:S});}
 function validarSave(o){
@@ -2525,10 +2573,13 @@ function backupClique(id){
   if(id==='btn-impok'){
     var o=lerBackup($('#imp-txt').value);
     if(!o){toast('Não reconheci esse backup. Confira se copiou o código inteiro.');return;}
-    if(!confirm('Substituir a carreira deste aparelho pela importada (temporada '+o.temp+', '+o.clientes.length+' clientes)?'))return;
-    try{localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast('Não consegui gravar no aparelho.');return;}
-    S=carregar();fecharSheet();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();
-    toast('Carreira importada: temporada '+S.temp+'.');return;
+    dialogo({titulo:'Importar esta carreira?',texto:'<b>'+esc(o.nome||'Agência')+'</b> · temporada '+o.temp+' · '+o.clientes.length+' cliente'+(o.clientes.length!==1?'s':'')+'.',
+      nota:'Ela substitui a carreira que está neste aparelho.',perigo:true,ok:'Importar'},function(){
+      try{localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast('Não consegui gravar no aparelho.');return;}
+      S=carregar();fecharSheet();$('#intro').classList.remove('on');$('#game').hidden=false;aba='mesa';render();
+      toast('Carreira importada: temporada '+S.temp+'.');
+    });
+    return;
   }
   if(!S)return;
   if(id==='btn-exp'){
@@ -2544,8 +2595,9 @@ function backupClique(id){
   if(id==='btn-copiar'){
     var cod=btoa(unescape(encodeURIComponent(backupTexto())));
     var ok=function(){toast('Código copiado. Guarde em algum lugar (notas, e-mail).');};
-    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(cod).then(ok,function(){prompt('Copie o código:',cod);});
-    else prompt('Copie o código:',cod);
+    var mostra=function(){dialogo({titulo:'Código do backup',texto:'Selecione tudo e copie. Guarde em algum lugar seguro.',codigo:cod,ok:'Pronto',cancelar:false});};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(cod).then(ok,mostra);
+    else mostra();
   }
 }
 function vBackup(){
@@ -2603,9 +2655,10 @@ document.addEventListener('click',function(ev){
   }
   if(d.irrank){aba='esc';subEsc='rank';render();return;}
   if(d.nome){
-    var nv2=prompt('Nome da agência:',S.nome||'');
-    if(nv2&&nv2.trim())S.nome=nv2.trim().slice(0,28);
-    render();return;
+    dialogo({titulo:'Nome da agência',campo:{valor:S.nome||'',max:28},ok:'Salvar'},function(v){
+      if(v&&v.trim()){S.nome=v.trim().slice(0,28);render();toast('Agora você é a '+esc(S.nome)+'.');}
+    });
+    return;
   }
   if(d.f){filtro=d.f;render();return;}
   if(d.p){abrirJogador(+d.p);return;}
@@ -2702,10 +2755,10 @@ document.addEventListener('click',function(ev){
   }
   if(d.resc){
     var pr4=porId(+d.resc);
-    if(pr4&&confirm('Encerrar a relação com '+pr4.nome+'? Ele vai para outra agência.')){
-      rescindir(pr4);fecharSheet();toast('Relação encerrada.');
-    }
-    render();return;
+    if(pr4)dialogo({titulo:'Encerrar a relação com '+esc(pr4.nome)+'?',texto:'Ele vai para uma agência rival.',
+      itens:['reputação −0,4'].concat(pr4.dir?['seus '+Math.round(pr4.dir.pct*100)+'% dos direitos são revendidos por 80% do valor']:[]),
+      perigo:true,ok:'Encerrar'},function(){rescindir(pr4);fecharSheet();render();toast('Relação encerrada.');});
+    return;
   }
   if(d.seg){
     var pg=porId(+d.seg);
@@ -2780,7 +2833,8 @@ document.addEventListener('click',function(ev){
   if(t.id==='btn-temp'){rodarTemporada();neg=null;aval=null;render();abrirSuspense();return;}
   if(t.id==='btn-versrel'){tSusp.forEach(clearTimeout);tSusp=[];abrirRel();return;}
   if(t.id==='btn-vender'){
-    if(confirm('Vender a agência por '+din(valorAgencia())+' e encerrar a carreira?')){venderAgencia();salvar();abrirVenda();}
+    dialogo({titulo:'Vender a agência?',texto:'Ela vale <b>'+din(valorAgencia())+'</b>: <b>'+tituloDe(valorAgencia())+'</b>.',
+      nota:'A venda encerra a carreira. Não dá para voltar.',perigo:true,ok:'Vender'},function(){venderAgencia();salvar();abrirVenda();});
     return;
   }
   if(d.buscapre){
@@ -2792,9 +2846,17 @@ document.addEventListener('click',function(ev){
     var pq2=d.pre.split(':'),pp9=porId(+pq2[0]),of9=((S.pres||{})[+pq2[0]]||[])[+pq2[1]];
     if(pp9&&of9&&podePre(pp9)){
       var op9=opiniaoCliente(pp9,of9);
-      if(!op9.quer&&!confirm(pp9.nome+' não gosta desse destino ('+op9.motivos.join(', ')+'). Assinar mesmo assim? Custa 12 de confiança.'))return;
-      if(!op9.quer)mexeConf(pp9,-12,'você forçou o pré-contrato com o '+clube(of9.c).n);
-      var c9=fecharPre(pp9,of9);toast('Pré-contrato assinado. Comissão de '+din(c9)+'.');
+      var assina=function(forcou){
+        if(forcou)mexeConf(pp9,-12,'você forçou o pré-contrato com o '+clube(of9.c).n);
+        var c9=fecharPre(pp9,of9);render();toast('Pré-contrato assinado. Comissão de '+din(c9)+'.');
+      };
+      if(!op9.quer){
+        dialogo({titulo:esc(pp9.nome)+' não gosta desse destino',itens:op9.motivos.map(esc),
+          nota:'Assinar mesmo assim custa 12 de confiança. Hoje ele está em '+Math.round(pp9.conf)+'.',perigo:true,ok:'Assinar mesmo assim',cancelar:'Deixar para lá'},
+          function(){assina(true);});
+        return;
+      }
+      assina(false);return;
     }
     render();return;
   }
@@ -2823,11 +2885,12 @@ document.addEventListener('click',function(ev){
     fecharSheet();aba='mesa';render();return;
   }
   if(t.id==='btn-reset'){
-    if(confirm('Fechar o escritório e recomeçar?')){
+    dialogo({titulo:'Fechar o escritório e recomeçar?',texto:'A carreira atual é apagada deste aparelho.',
+      nota:'Se quiser guardar, faça um backup antes (Escritório → Backup).',perigo:true,ok:'Apagar e recomeçar'},function(){
       try{localStorage.removeItem(SAVE);}catch(e){}
       S=null;fecharSheet();$('#game').hidden=true;$('#btn-novo').hidden=false;$('#btn-cont').hidden=true;
       $('#intro').classList.add('on');
-    }
+    });
     return;
   }
   if(t.id==='btn-novo'){

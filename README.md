@@ -592,3 +592,4 @@ Datas de 2026.
 | 27/10 | Correção | faixa de nível e teto: em ~1 de cada 5 jogadores ela não continha o valor real e "pulava" a cada sondagem; agora sempre contém e só aperta |
 | 27/10 | Dificuldade | rivais perseguem o seu faturamento; a líder vira alvo (mais assédio, mais disputa por garotos, rivais investindo) |
 | 27/10 | Copa, pré-contrato e mais | Copa do Mundo; pré-contrato (Bosman) e fim de contrato com consequência; academia; direitos econômicos; dificuldade; rivais com manchetes; backup da carreira |
+| 27/10 | Visual | confirmações e campos de texto em janela própria do jogo, no lugar das caixas do navegador |
