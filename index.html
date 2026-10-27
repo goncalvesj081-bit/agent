@@ -144,6 +144,13 @@ nav button svg{display:block;width:21px;height:21px;margin:0 auto 2px;fill:none;
 nav button{position:relative}
 nav .badge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
 
+/* craques e equipe */
+.sec-h{padding:9px 13px 7px;font-size:11.5px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--mut);background:var(--sur2);border-bottom:1px solid var(--line)}
+.sec-h span{font-weight:500;text-transform:none;letter-spacing:0;margin-left:6px;color:var(--mut2)}
+.star{font-size:19px;line-height:1;padding:2px 0 2px 10px;color:var(--mut2);vertical-align:-2px}
+.star.on{color:var(--warn)}
+.item.eqp .i-nm{font-weight:500}
+
 /* controle segmentado (diretriz) */
 .seg{display:flex;background:var(--sur2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;margin-top:9px}
 .seg button{flex:1;min-width:0;font-size:12.5px;padding:7px 2px;border-radius:6px;color:var(--mut);white-space:nowrap}
@@ -420,11 +427,11 @@ function stMin(s){return STATUS[stIdx(s)][2];}
 
 /* ---------- escritorio ---------- */
 var ESCR=[
- {n:'Mesa na sala de casa',cli:4,cus:0.028,com:0.06,tr:0.05,nomes:5,sond:2,alc:18,c:0,obra:0},
- {n:'Sala alugada no centro',cli:8,cus:0.22,com:0.06,tr:0.06,nomes:5,sond:3,alc:34,c:0.9,obra:1},
- {n:'Escritório com equipe',cli:14,cus:0.9,com:0.07,tr:0.075,nomes:8,sond:5,alc:52,c:6,obra:1},
- {n:'Agência nacional',cli:22,cus:3.4,com:0.08,tr:0.085,nomes:11,sond:7,alc:70,c:24,obra:2},
- {n:'Agência com filial na Europa',cli:32,cus:11,com:0.09,tr:0.095,nomes:15,sond:10,alc:100,c:90,obra:2}
+ {n:'Mesa na sala de casa',foco:4,cli:4,cus:0.028,com:0.06,tr:0.05,nomes:5,sond:2,alc:18,c:0,obra:0},
+ {n:'Sala alugada no centro',foco:4,cli:8,cus:0.22,com:0.06,tr:0.06,nomes:5,sond:3,alc:34,c:0.9,obra:1},
+ {n:'Escritório com equipe',foco:6,cli:14,cus:0.9,com:0.07,tr:0.075,nomes:8,sond:5,alc:52,c:6,obra:1},
+ {n:'Agência nacional',foco:9,cli:22,cus:3.4,com:0.08,tr:0.085,nomes:11,sond:7,alc:70,c:24,obra:2},
+ {n:'Agência com filial na Europa',foco:12,cli:32,cus:11,com:0.09,tr:0.095,nomes:15,sond:10,alc:100,c:90,obra:2}
 ];
 var MELH=[
  {id:'olh',n:'Rede de olheiros',d:'Mais nomes chegam à sua mesa e a sondagem rende mais.',c:[0.5,2.5,11],t:[1,1,2]},
@@ -527,10 +534,18 @@ function sorteiaClube(maxRep){
   }
   return MUNDO[Math.floor(Math.random()*MUNDO.length)];
 }
+/* nome que ninguem do radar ou da carteira usa; se acabar, ganha a inicial do sobrenome */
+function nomeLivre(){
+  var usados={};todos().concat(S.exCli||[]).forEach(function(p){usados[p.nome]=1;});
+  var livres=NOMES.filter(function(n){return !usados[n];});
+  if(livres.length)return pick(livres);
+  for(var k=0;k<40;k++){var n=pick(NOMES)+' '+'ABCDEFGHJLMNPRSTV'[ri(0,16)]+'.';if(!usados[n])return n;}
+  return pick(NOMES);
+}
 function gerarJogador(){
   var org=sorteiaClube(alcance()),lg=LIGAS[divDe(org.id)];
   var nv=cl(Math.round(rnd(30+lg.rep*0.12,58+lg.rep*0.16)+gs()*5),22,88);
-  var p={id:S.seq++,nome:pick(NOMES),pos:pick(ORD),idade:ri(16,22),clube:org.id,
+  var p={id:S.seq++,nome:nomeLivre(),pos:pick(ORD),idade:ri(16,22),clube:org.id,
     nv:nv,pot:cl(Math.round(nv*(1+rnd(-0.02,0.34))+gs()*3),nv-2,99),
     fama:0,conh:0.12,conf:60,agencia:Math.random()<0.32?pick(AGENCIAS):null,
     status:pick(['reserva','rodando','fora','rodando']),t:null,hist:[],desde:0,exig:null};
@@ -610,7 +625,7 @@ function assinar(p){
   gastar(c,p);
   if(Math.random()<chanceAssinar(p)){
     p.agencia='VOCÊ';p.conf=cl(58+S.rep/6,45,88);p.desde=S.temp;p.conh=cl(p.conh+0.25,0,0.92);
-    recalcEst(p);p.confLog=[];p.valorAssin=valor(p);p.plano='ouvir';
+    recalcEst(p);p.confLog=[];p.valorAssin=valor(p);p.plano=S.planoPad||'ouvir';
     S.pool=S.pool.filter(function(x){return x.id!==p.id;});
     S.clientes.push(p);S.rep=cl(S.rep+0.5,0,100);
     S.noticias.push({t:'<b>'+esc(p.nome)+'</b> ('+clube(p.clube).n+') assinou com você.',k:'good'});
@@ -763,8 +778,10 @@ var PLANOS=[
  {id:'minutos',n:'Buscar minutos',c:'Minutos',d:'fecha a que der mais espaço no elenco'}
 ];
 function segPlano(p){
+  var eq=!ehCraque(p);
   return '<div class="seg" role="group" aria-label="Diretriz na janela">'+PLANOS.map(function(pl){
-    return '<button data-plano="'+p.id+':'+pl.id+'" title="'+pl.n+': '+pl.d+'"'+(planoDe(p)===pl.id?' aria-pressed="true"':'')+'>'+pl.c+'</button>';
+    var rot=eq&&pl.id==='ouvir'?'Equipe':pl.c,tt=eq&&pl.id==='ouvir'?'a equipe fecha só o que for bom para ele':pl.d;
+    return '<button data-plano="'+p.id+':'+pl.id+'" title="'+pl.n+': '+tt+'"'+(planoDe(p)===pl.id?' aria-pressed="true"':'')+'>'+rot+'</button>';
   }).join('')+'</div>';
 }
 function planoDe(p){return p.plano||S.planoPad||'ouvir';}
@@ -778,35 +795,101 @@ function melhorPara(p,plano){
   });
   return melhor;
 }
+/* ---------- equipe e craques ----------
+   A partir da sala alugada a agencia tem equipe. Voce cuida pessoalmente so dos craques
+   (marcados por voce ou, no que sobrar, os mais valiosos); a equipe resolve a rotina dos outros. */
+function temEquipe(){return S.escr>=1;}
+function limCraques(){return escr().foco;}
+function craques(){
+  if(!temEquipe())return S.clientes.slice();
+  var lim=limCraques(),fixos=S.clientes.filter(function(p){return p.craque===true;}).slice(0,lim);
+  var resto=S.clientes.filter(function(p){return p.craque!==true&&p.craque!==false;})
+    .sort(function(a,b){return valor(b)-valor(a);});
+  return fixos.concat(resto.slice(0,Math.max(0,lim-fixos.length)));
+}
+function ehCraque(p){
+  if(!temEquipe())return true;
+  return craques().some(function(x){return x.id===p.id;});
+}
+function qualiEquipe(){return 0.78+niv('jur')*0.05;}
+function equipeTrabalha(){
+  var log=[];
+  if(!temEquipe())return log;
+  var cq=craques().map(function(p){return p.id;});
+  S.clientes.slice().forEach(function(p){
+    if(cq.indexOf(p.id)>=0)return;
+    if(p.assedio){
+      var ch=cl(0.35+p.conf/160+S.rep/220+niv('psi')*0.09,0.1,0.94)*(0.8+niv('psi')*0.05);
+      p.segurou=S.temp;
+      if(Math.random()<ch){
+        mexeConf(p,ri(4,9),'a equipe segurou ele contra a '+p.assedio.ag);
+        log.push({t:'Segurou <b>'+esc(p.nome)+'</b> contra a '+p.assedio.ag+'.',k:'good'});p.assedio=null;
+      }else{
+        mexeConf(p,-3,'a conversa da equipe não convenceu');
+        log.push({t:'Não conseguiu afastar a '+p.assedio.ag+' de <b>'+esc(p.nome)+'</b>.',k:'bad'});
+      }
+    }
+    if(!p.emprest&&(p.ct.ate<=S.temp+1||(p.exig&&p.exig.t==='salario'))){
+      var pr=propostaBase(p),ok=false;
+      for(var k=0;k<2&&!ok;k++){if(Math.random()<chanceRenov(p,pr)*qualiEquipe())ok=true;else pr.sal*=0.95;}
+      if(ok){var com=fecharRenov(p,pr);log.push({t:'Renovou <b>'+esc(p.nome)+'</b> até '+(S.temp+pr.anos)+'. Comissão de '+din(com)+'.',k:'good'});}
+      else log.push({t:'Não fechou a renovação de <b>'+esc(p.nome)+'</b>'+(p.ct.ate<=S.temp?': contrato vencido':'')+'.',k:p.ct.ate<=S.temp?'bad':''});
+    }
+    if(p.exig&&p.exig.t==='jogar'&&!p.emprest){
+      var em=gerarEmprestimos(p).filter(function(o){return stIdx(o.status)>=2;});
+      if(em.length){fecharEmprestimo(p,em[0]);log.push({t:'Emprestou <b>'+esc(p.nome)+'</b> ao '+clube(p.clube).n+' para ele jogar.',k:'good'});}
+    }
+    if(p.exig&&p.conversou!==S.temp){p.conversou=S.temp;mexeConf(p,ri(2,5),'a equipe conversou com ele');}
+  });
+  return log;
+}
+function negocioGrande(of){
+  var com=of.preco*taxaTr()+of.luvas*0.4;
+  return com>=Math.max(0.3,(comissaoAno()+imagemAno())*0.6);
+}
 function resolverJanela(){
-  var fechados=[],recusados=[],mesa=[];
+  var fechados=[],recusados=[],mesa=[],equipe=[];
   S.clientes.slice().forEach(function(p){
     var l=S.props[p.id];
     if(!l||!l.length)return;
-    var plano=planoDe(p);
+    var plano=planoDe(p),meu=ehCraque(p);
     /* proposta fora da curva sempre passa pela sua mão */
-    if(l.some(function(o){return foraDaCurva(p,o);})&&plano!=='ouvir'){
+    if(l.some(function(o){return foraDaCurva(p,o)&&(meu||negocioGrande(o));})){
       mesa.push({n:p.nome,m:'proposta fora da curva'});return;
     }
-    if(plano==='ouvir'){mesa.push({n:p.nome,m:l.length+' proposta(s)'});return;}
+    if(plano==='ouvir'&&meu){mesa.push({n:p.nome,m:l.length+' proposta(s)'});return;}
+    if(plano==='ouvir'){
+      /* a equipe so fecha o que for bom para ele: mais minutos ou salario bem maior */
+      var bom=melhorPara(p,'sair');
+      if(!bom||!(stIdx(bom.o.status)>=stIdx(p.status)||bom.o.sal>=p.ct.sal*1.15)){
+        equipe.push({t:'Recusou '+l.length+' proposta'+(l.length>1?'s':'')+' por <b>'+esc(p.nome)+'</b>: nenhuma era boa para ele.',k:''});
+        delete S.props[p.id];return;
+      }
+      plano='sair';
+    }
     if(plano==='segurar'){
       var boa=l.some(function(o){return o.sal>p.ct.sal*1.15||stIdx(o.status)>stIdx(p.status);});
       if(boa)mexeConf(p,-5,'você segurou ele numa proposta que ele queria');
       recusados.push({n:p.nome,q:l.length});
       delete S.props[p.id];return;
     }
-    var esc=melhorPara(p,plano);
-    if(!esc){delete S.props[p.id];return;}
-    if(Math.random()>=aceitaLiberar(p,esc.o)){
+    var esco=melhorPara(p,plano);
+    if(!esco){delete S.props[p.id];return;}
+    if(Math.random()>=aceitaLiberar(p,esco.o)){
+      if(!meu){equipe.push({t:'O '+clube(p.clube).n+' barrou a saída de <b>'+esc(p.nome)+'</b>.',k:''});delete S.props[p.id];return;}
       mesa.push({n:p.nome,m:'o clube barrou a saída'});return;
     }
-    var op=opiniaoCliente(p,esc.o);
-    if(!op.quer){mesa.push({n:p.nome,m:'ele não quer: '+op.motivos.join(', ')});return;}
-    var com=fecharTransfer(p,esc.o);
+    var op=opiniaoCliente(p,esco.o);
+    if(!op.quer){
+      if(!meu){equipe.push({t:'<b>'+esc(p.nome)+'</b> não quis o '+clube(esco.o.c).n+' ('+op.motivos.join(', ')+').',k:''});delete S.props[p.id];return;}
+      mesa.push({n:p.nome,m:'ele não quer: '+op.motivos.join(', ')});return;
+    }
+    var com=fecharTransfer(p,esco.o);
     fechados.push({n:p.nome,c:p.clube,v:com});
+    if(!meu)equipe.push({t:'Vendeu <b>'+esc(p.nome)+'</b> ao '+clube(p.clube).n+'. Comissão de '+din(com)+'.',k:'good'});
     delete S.props[p.id];
   });
-  return {fechados:fechados,recusados:recusados,mesa:mesa};
+  return {fechados:fechados,recusados:recusados,mesa:mesa,equipe:equipe};
 }
 
 function opiniaoCliente(p,of){
@@ -1010,6 +1093,8 @@ function rodarTemporada(){
          props:Object.keys(S.props).length,perdidos:perdidos.length,janela:S.janela,
          pos:posicao(),posAnt:posAnt,dCaixa:S.caixa-caixaAnt};
   S.recTemp=0;S.temp++;S.sondUsadas=0;S.emps={};S.renovTent={};
+  S.rel.equipe=(S.janela.equipe||[]).concat(equipeTrabalha());
+  S.rel.caixa=S.caixa;S.rel.dCaixa=S.caixa-caixaAnt;
   if(S.caixa<-0.2)S.fim='O escritório quebrou: '+din(S.caixa)+' no vermelho.';
   else if(!S.clientes.length&&S.caixa<0.02)S.fim='Sem clientes e sem caixa para ir atrás de outro.';
   try{var r=parseFloat(localStorage.getItem('agente:rec')||'0');if(S.receita>r)localStorage.setItem('agente:rec',S.receita.toFixed(2));}catch(e){}
@@ -1082,9 +1167,10 @@ function barra(v,cor){return '<div class="trk" style="height:5px"><div class="bd
 function corConf(v){return v>=60?'var(--ac)':(v>=35?'var(--warn)':'var(--neg)');}
 function faixaTxt(p){var f=faixa(p);return f.exato?String(Math.round(p.nv)):f.lo+'–'+f.hi;}
 function pendencias(){
-  var n=0;
+  var n=0,cq=craques().map(function(p){return p.id;});
   S.clientes.forEach(function(p){
     if(S.props[p.id])n++;
+    else if(cq.indexOf(p.id)<0)return;
     else if(p.ct.ate<=S.temp+1)n++;
     else if(p.exig)n++;
   });
@@ -1160,6 +1246,15 @@ function vCorrida(){
       (abaixo?'Vantagem de <b class="pos">'+din(S.receita-abaixo.f)+'</b> sobre a '+esc(abaixo.n)+'.':''))+'</div></div>'+
     '<button class="lnk" data-irrank="1">ranking</button></div></div></div>';
 }
+function vEquipe(){
+  if(!temEquipe())return '';
+  var log=(S.rel&&S.rel.t===S.temp-1&&S.rel.equipe)||[],nEq=S.clientes.length-craques().length;
+  var h='<div class="card"><div class="card-h"><h2>Sua equipe</h2><span>cuida de '+nEq+' cliente'+(nEq!==1?'s':'')+'</span></div><div class="card-b">';
+  if(!log.length)h+='<p class="hint" style="margin:0">'+(nEq?'Nada para relatar nesta virada.':'Todos os clientes estão com você. Quem passar do limite de '+limCraques()+' craques fica com a equipe.')+'</p>';
+  else h+=log.slice(0,6).map(function(e){return '<div class="nw '+(e.k||'')+'">'+e.t+'</div>';}).join('')+
+    (log.length>6?'<button class="lnk" id="btn-verrel" style="padding-left:0">mais '+(log.length-6)+' no relatório</button>':'');
+  return h+'</div></div>';
+}
 function vPassos(){
   var t=S.tut;
   if(!t||t.fim||S.temp>3)return '';
@@ -1208,15 +1303,16 @@ function vMesa(){
     if(comProp.length>2)h+='<div class="card-b" style="border-top:1px solid var(--line)"><button class="btn sec" data-recgeral="1">Recusar todas as propostas da janela</button></div>';
     h+='</div>';
   }
-  var itens=[];
+  var itens=[],cq=craques().map(function(p){return p.id;});
   S.clientes.forEach(function(p){
+    if(cq.indexOf(p.id)<0)return;
     if(p.assedio)itens.push({p:p,t:'assédio',x:'a '+p.assedio.ag+' está em cima dele',k:'neg'});
     else if(p.exig)itens.push({p:p,t:'exigência',x:p.exig.txt,k:'bad'});
     else if((S.props[p.id]||[]).length)return;
     else if(p.ct.ate<=S.temp)itens.push({p:p,t:'contrato',x:'contrato vencido no '+clube(p.clube).n,k:'bad'});
     else if(p.ct.ate===S.temp+1)itens.push({p:p,t:'contrato',x:'último ano de contrato',k:''});
   });
-  h+='<div class="card"><div class="card-h"><h2>Sua mesa</h2><span>'+itens.length+' assunto'+(itens.length!==1?'s':'')+'</span></div>';
+  h+='<div class="card"><div class="card-h"><h2>Sua mesa</h2><span>'+itens.length+' assunto'+(itens.length!==1?'s':'')+(temEquipe()?' · só craques':'')+'</span></div>';
   if(!itens.length)h+='<div class="card-b hint">'+(comProp.length?'Fora as propostas acima, nada pendente.':'Nada pendente. Dá para procurar nomes novos ou rodar a temporada.')+'</div>';
   itens.forEach(function(it){
     var c=clube(it.p.clube);
@@ -1234,21 +1330,29 @@ function vMesa(){
       '</div></div>';
   });
   h+='</div>';
-  return h;
+  return h+vEquipe();
 }
 
 /* ---------- clientes ---------- */
 function vCli(){
   var h='<div class="card"><div class="card-h"><h2>Seus clientes</h2><span>'+S.clientes.length+' de '+limCli()+'</span></div>';
-  if(S.clientes.length)h+='<div class="card-b hint" style="border-bottom:1px solid var(--line)">A diretriz de cada um resolve a janela sozinha. Só chega na sua mesa quem está em <b>Ouvir</b>, quem recebeu proposta fora da curva, quem o clube barrou e quem não quis ir.</div>';
+  if(S.clientes.length)h+='<div class="card-b hint" style="border-bottom:1px solid var(--line)">'+(temEquipe()?
+    'Você cuida pessoalmente de até <b>'+limCraques()+' craques</b> (★). Os outros ficam com a equipe: ela renova, conversa, segura e decide propostas. Só sobe para você proposta fora da curva.':
+    'A diretriz de cada um resolve a janela sozinha. Só chega na sua mesa quem está em <b>Ouvir</b>, quem recebeu proposta fora da curva, quem o clube barrou e quem não quis ir.')+'</div>';
   if(!S.clientes.length)h+='<div class="card-b hint">Sem ninguém na carteira. Vá em Nomes e assine alguém.</div>';
   if(S.clientes.length>2)h+='<div class="chips">'+ORDENS.map(function(o){return '<button class="chip" data-ord="'+o[0]+'"'+(ordem===o[0]?' aria-pressed="true"':'')+'>'+o[1]+'</button>';}).join('')+'</div>';
-  ordenar(S.clientes.slice()).forEach(function(p){
-    var c=clube(p.clube),temProp=(S.props[p.id]||[]).length,venc=p.ct.ate<=S.temp+1;
-    h+='<div class="item" data-p="'+p.id+'">'+
+  var cqIds=craques().map(function(x){return x.id;}),secao=null;
+  ordenar(S.clientes.slice()).sort(function(a,b){return (cqIds.indexOf(a.id)<0)-(cqIds.indexOf(b.id)<0);}).forEach(function(p){
+    var c=clube(p.clube),temProp=(S.props[p.id]||[]).length,venc=p.ct.ate<=S.temp+1,cq=cqIds.indexOf(p.id)>=0;
+    if(temEquipe()&&secao!==cq){
+      secao=cq;
+      h+='<div class="sec-h">'+(cq?'★ Craques com você <span>'+cqIds.length+' de '+limCraques()+'</span>':'Com a equipe <span>'+(S.clientes.length-cqIds.length)+'</span>')+'</div>';
+    }
+    h+='<div class="item'+(temEquipe()&&!cq?' eqp':'')+'" data-p="'+p.id+'">'+
       '<div style="display:flex;gap:9px;align-items:center">'+escudo(c,30)+
       '<div style="flex:1;min-width:0"><div class="i-top"><div><span class="i-pos">'+p.pos+'</span><span class="i-nm">'+esc(p.nome)+'</span></div>'+
-      '<div class="i-val" style="font-size:13.5px">'+din(p.ct.sal)+'<span class="mut" style="font-size:11px">/ano</span></div></div>'+
+      '<div class="i-val" style="font-size:13.5px">'+din(p.ct.sal)+'<span class="mut" style="font-size:11px">/ano</span>'+
+      (temEquipe()?'<button class="star'+(cq?' on':'')+'" data-craque="'+p.id+'" aria-label="'+(cq?'passar para a equipe':'marcar como craque')+'">'+(cq?'★':'☆')+'</button>':'')+'</div></div>'+
       '<div class="i-sub"><span>'+p.idade+' anos · '+esc(c.n)+'</span><span>'+stNome(p.status)+'</span></div></div></div>'+
       '<div class="stat"><div>nível<b>'+faixaTxt(p)+(p.ultDelta?' <span class="'+(p.ultDelta>0?'pos':'neg')+'" style="font-size:11px">'+(p.ultDelta>0?'+':'')+p.ultDelta+'</span>':'')+'</b></div>'+
       '<div>vale<b>'+din(valor(p))+'</b></div>'+
@@ -1256,12 +1360,12 @@ function vCli(){
       '<div>confiança<b style="color:'+corConf(p.conf)+'">'+Math.round(p.conf)+'</b></div></div>'+
       (p.exig?'<div class="i-sub"><span class="neg">'+esc(p.exig.txt)+'</span><span></span></div>':'')+
       segPlano(p)+
-      '<div class="ofr-act" style="margin-top:9px">'+
+      (temEquipe()&&!cq&&!temProp?'':'<div class="ofr-act" style="margin-top:9px">'+
       (temProp?'<button class="btn sec" data-pn="'+p.id+'">Ver '+temProp+' proposta'+(temProp>1?'s':'')+'</button>':
        '<button class="btn sec" data-pren="'+p.id+'">'+(venc?'Renovar contrato':'Negociar contrato')+'</button>')+
       (p.assedio?'<button class="lnk" data-seg="'+p.id+'">Segurar</button>':
        (p.exig?'<button class="lnk" data-conv="'+p.id+'">Conversar</button>':''))+
-      '</div></div>';
+      '</div>')+'</div>';
   });
   h+='</div>';
   if(S.exCli.length){
@@ -1429,6 +1533,7 @@ function vSede(){
   var h='<div class="card"><div class="card-h"><h2>'+esc(S.nome||'Sua agência')+'</h2><span><button data-nome="1" style="color:var(--info);font-size:12px">renomear</button></span></div>'+
     '<div class="card-b"><div class="kv"><span>Sede</span><b>'+esc(e.n)+' <span class="mut" style="font-weight:400">(nível '+(S.escr+1)+' de '+ESCR.length+')</span></b></div>'+
     '<div class="kv"><span>Clientes que cabem</span><b>'+limCli()+'</b></div>'+
+    '<div class="kv"><span>Craques com você</span><b>'+(temEquipe()?'até '+limCraques()+' · o resto com a equipe':'todos (sem equipe ainda)')+'</b></div>'+
     '<div class="kv"><span>Nomes por temporada</span><b>'+(e.nomes+niv('olh')*2)+'</b></div>'+
     '<div class="kv"><span>Sondagens por janela</span><b>'+limSond()+'</b></div>'+
     '<div class="kv"><span>Alcance (reputação da liga)</span><b>até '+alcance()+'</b></div>'+
@@ -1441,7 +1546,7 @@ function vSede(){
       return '<button class="chip" data-planopad="'+pl.id+'"'+((S.planoPad||'ouvir')===pl.id?' aria-pressed="true"':'')+'>'+pl.n+'</button>';
     }).join('')+'</div></div>';
   if(obra)h+='<div class="card-b" style="border-top:1px solid var(--line)"><p class="hint" style="margin:0">Mudança para <b>'+ESCR[obra.alvo].n+'</b> em andamento: fica pronta em '+obra.restam+' temporada'+(obra.restam>1?'s':'')+'.</p></div>';
-  else if(prox)h+='<div class="card-b" style="border-top:1px solid var(--line)"><p class="hint" style="margin:0 0 9px"><b>'+esc(prox.n)+'</b> — '+prox.cli+' clientes, '+prox.nomes+' nomes por temporada, alcance '+prox.alc+', comissão '+pc(prox.com)+'. Leva '+prox.obra+' temporada'+(prox.obra>1?'s':'')+' para ficar de pé.</p>'+
+  else if(prox)h+='<div class="card-b" style="border-top:1px solid var(--line)"><p class="hint" style="margin:0 0 9px"><b>'+esc(prox.n)+'</b> — '+prox.cli+' clientes ('+prox.foco+' craques com você'+(S.escr===0?', e chega a equipe':'')+'), '+prox.nomes+' nomes por temporada, alcance '+prox.alc+', comissão '+pc(prox.com)+'. Leva '+prox.obra+' temporada'+(prox.obra>1?'s':'')+' para ficar de pé.</p>'+
     '<button class="btn'+(prox.c>S.caixa?'':' sec')+'" id="btn-sede"'+(prox.c>S.caixa?' disabled':'')+'>Montar a nova sede · '+din(prox.c)+'</button></div>';
   return h+'</div>';
 }
@@ -1521,6 +1626,8 @@ function fRes(p,meu,c,f,fp){
     '<div class="kv"><span>Contrato</span><b>'+(p.ct.ate<=S.temp?'<span class="wrn">vencido</span>':'até '+p.ct.ate)+
       (p.ct.cl?' <span class="mut" style="font-weight:400">· cláusula '+din(p.ct.cl)+'</span>':'')+'</b></div>'+
     '<div class="kv"><span>No elenco</span><b>'+stNome(p.status)+'</b></div>'+
+    (meu&&temEquipe()?'<div class="kv"><span>Quem cuida</span><b>'+(ehCraque(p)?'<span class="wrn">★</span> você (craque)':'sua equipe')+
+      ' <button data-craque="'+p.id+'" style="color:var(--info);font-size:12px;font-weight:500;margin-left:4px">'+(ehCraque(p)?'passar para a equipe':'virar craque')+'</button></b></div>':'')+
     (meu?'<div class="kv"><span>Diretriz na janela</span><b>'+PLANOS.filter(function(x){return x.id===planoDe(p);})[0].n+'</b></div>':'')+
     (p.sellon?'<div class="kv"><span>Você tem da próxima venda</span><b class="pos">'+Math.round(p.sellon*100)+'%</b></div>':'')+
     (p.idade<18?'<div class="kv"><span>Menor de idade</span><b class="wrn">artigo 19: só no mesmo país</b></div>':'')+
@@ -1759,6 +1866,10 @@ function abrirRel(){
         j.mesa.map(function(x){return '<div class="i-sub" style="margin:0 0 5px"><span>'+esc(x.n)+'</span><span class="mut">'+esc(x.m)+'</span></div>';}).join(''):'')+
       '</div></div>';
   }
+  if(b.equipe&&b.equipe.length){
+    h+='<div class="card"><div class="card-h"><h2>Sua equipe</h2><span>'+b.equipe.length+' assunto'+(b.equipe.length>1?'s':'')+'</span></div><div class="card-b">'+
+      b.equipe.map(function(e){return '<div class="nw '+(e.k||'')+'">'+e.t+'</div>';}).join('')+'</div></div>';
+  }
   if(b.evs.length){
     h+='<div class="card"><div class="card-h"><h2>O que aconteceu</h2></div><div class="card-b">'+
       b.evs.map(function(e){return '<div class="nw '+(e.k||'')+'">'+e.t+'</div>';}).join('')+'</div></div>';
@@ -1788,13 +1899,23 @@ function carregar(){
 
 /* =================== eventos =================== */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-irrank],[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
+  var t=ev.target.closest('[data-craque],[data-irrank],[data-a],[data-se],[data-fa],[data-ord],[data-pn],[data-pren],[data-recall],[data-recgeral],[data-plano],[data-planopad],[data-trf],[data-forca],[data-desiste],[data-f],[data-p],[data-sond],[data-sign],[data-tr],[data-rec],[data-resc],[data-nome],[data-seg],[data-buscaremp],[data-emp],[data-abrirneg],[data-neg],[data-prop],[data-conv],[data-inv],#btn-sede,#btn-temp,#btn-fecharrel,#btn-verrel,#btn-reset,#sheet-x,#btn-novo,#btn-cont');
   if(!t)return;
   if(!S&&t.id!=='btn-novo'&&t.id!=='btn-cont')return;
   var d=t.dataset;
   if(d.a){scrollPos[aba]=window.scrollY;aba=d.a;render();return;}
   if(d.se){subEsc=d.se;render();return;}
   if(d.fa){fichaAba=d.fa;renderSheet();return;}
+  if(d.craque){
+    var pq=porId(+d.craque);
+    if(pq){
+      if(ehCraque(pq)){pq.craque=false;toast(esc(pq.nome)+' agora fica com a equipe.');}
+      else if(S.clientes.filter(function(x){return x.craque===true;}).length>=limCraques())
+        toast('Você já marcou '+limCraques()+' craques. Passe alguém para a equipe antes.');
+      else{pq.craque=true;toast(esc(pq.nome)+' agora é craque: fica com você.');}
+    }
+    render();return;
+  }
   if(d.irrank){aba='esc';subEsc='rank';render();return;}
   if(d.nome){
     var nv2=prompt('Nome da agência:',S.nome||'');
@@ -1809,7 +1930,7 @@ document.addEventListener('click',function(ev){
   if(d.planopad){S.planoPad=d.planopad;render();return;}
   if(d.plano){
     var pl=d.plano.split(':'),pj7=porId(+pl[0]);
-    if(pj7){pj7.plano=pl[1];if(S.tut)S.tut.dir=1;toast(esc(pj7.nome)+': '+PLANOS.filter(function(x){return x.id===pl[1];})[0].d+'.');}
+    if(pj7){pj7.plano=pl[1];if(S.tut)S.tut.dir=1;toast(esc(pj7.nome)+': '+(pl[1]==='ouvir'&&!ehCraque(pj7)?'a equipe fecha só o que for bom para ele':PLANOS.filter(function(x){return x.id===pl[1];})[0].d)+'.');}
     render();return;
   }
   if(d.recall){

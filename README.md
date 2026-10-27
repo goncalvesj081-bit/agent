@@ -71,13 +71,13 @@ temporada roda num botão e devolve números.
 
 ### Escritório (a alavanca principal)
 
-| Nível | Sede |
-|---|---|
-| 1 | mesa em casa |
-| 2 | sala alugada |
-| 3 | escritório com equipe |
-| 4 | agência nacional |
-| 5 | agência com filial na Europa |
+| Nível | Sede | Clientes | Craques com você |
+|---|---|---|---|
+| 1 | mesa em casa | 4 | todos (sem equipe) |
+| 2 | sala alugada | 8 | 4 |
+| 3 | escritório com equipe | 14 | 6 |
+| 4 | agência nacional | 22 | 9 |
+| 5 | agência com filial na Europa | 32 | 12 |
 
 O nível define:
 - quantos clientes cabem;
@@ -87,6 +87,26 @@ O nível define:
 - as duas taxas de comissão.
 
 Mudar de sede é obra: você paga agora e ela fica pronta em 1 ou 2 temporadas.
+
+### Equipe e craques
+
+A partir da sala alugada a agência tem equipe, e você passa a cuidar pessoalmente só dos
+**craques** (★). O número de craques depende da sede (tabela acima). Você marca quem é craque com
+a estrela, na lista de clientes ou na ficha; as vagas que sobrarem ficam com os mais valiosos.
+
+Os outros clientes ficam com a equipe, que age assim que a janela abre:
+
+| Situação | O que a equipe faz |
+|---|---|
+| Contrato vencendo, ou cliente pedindo salário | renova a preço de mercado (duas tentativas, chance um pouco menor que a sua) |
+| Cliente querendo jogar | busca empréstimo onde ele seja titular ou rode o elenco |
+| Assédio de rival | tenta segurar uma vez |
+| Cliente com exigência | conversa com ele, sem fazer promessa |
+| Propostas, com a diretriz *Equipe* | fecha só o que for bom para ele: mais minutos ou salário 15% maior |
+
+Para você só sobe proposta fora da curva cuja comissão seja grande para o tamanho da agência.
+Tudo o que a equipe fez aparece na Mesa e no relatório. O departamento jurídico melhora as
+renovações da equipe; o suporte ao atleta melhora a chance de segurar.
 
 ### Melhorias (também em obra)
 
@@ -135,7 +155,8 @@ Mudar de sede é obra: você paga agora e ela fica pronta em 1 ou 2 temporadas.
 ### Diretrizes (como a janela se resolve)
 
 Cada cliente tem uma diretriz, que você troca com um toque na linha. Existe também uma
-diretriz padrão da agência para quem assina novo.
+diretriz padrão da agência para quem assina novo. Para clientes que estão com a equipe, a
+diretriz *Ouvir* aparece como **Equipe**: as propostas vão para a equipe, não para você.
 
 | Diretriz | O que faz |
 |---|---|
