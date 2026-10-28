@@ -107,7 +107,7 @@ Escolhida ao abrir o escritório; aparece na sede.
 
 | Dificuldade | Caixa inicial | Rivais |
 |---|---|---|
-| Tranquilo | R$ 300 mil | crescem 3 pontos mais devagar, perseguem 25% menos, pressionam menos a líder |
+| Tranquilo | R$ 300 mil | crescem 3 pontos mais devagar, perseguem 20% menos, quase não pressionam a líder |
 | Normal | R$ 180 mil | como descrito nesta página |
 | Difícil | R$ 120 mil | crescem um pouco mais rápido, perseguem 15% mais, pressionam mais a líder |
 
@@ -176,16 +176,19 @@ Nove marcos de carreira, cada um valendo reputação:
   virar a maior agência é o objetivo de longo prazo.
 - **As rivais reagem a você.** Cada uma tem dois caminhos e fatura o maior deles:
   - crescimento próprio, de 20% a 25% por temporada, que acompanha o ciclo de mercado;
-  - perseguição: mira uma fração do seu faturamento na temporada (de 50% a 130%, conforme a
+  - perseguição: mira uma fração do seu faturamento na temporada (de 48% a 112%, conforme a
     força da rival) e fecha 60% da distância por temporada. Se você para de crescer, elas
     encostam.
-- **A líder vira alvo.** Enquanto você está em 1º, as rivais perseguem 20% a mais, assediam seus
+- **A líder vira alvo.** Enquanto você está em 1º, as rivais perseguem 15% a mais, assediam seus
   clientes 50% mais e brigam mais pelos garotos (marcam mais e levam 75% em vez de 60%).
 - Elas ficam mais fortes quando levam um cliente seu (por assédio) ou um garoto que você deixou
   passar.
 - Medido com bots em 30 carreiras: quem joga como o bot básico termina em 4º; quem fatura 40%
-  a mais chega colado na líder; para liderar com folga é preciso faturar uns 80% a mais, e mesmo
-  assim a vantagem na temporada 15 fica perto de 20%.
+  a mais lidera com pouca folga e disputa o 1º até o fim; quem fatura 80% a mais lidera com
+  folga.
+- As vendas das rivais têm preço de mercado, pela liga de destino: mediana de R$ 30 mi na elite
+  europeia (teto perto do recorde mundial), R$ 8 mi no resto da Europa, R$ 3 mi na Série A e
+  ligas sul-americanas fortes, R$ 800 mil nas menores.
 - A Mesa mostra sua posição e quanto falta para passar a próxima. A Análise mostra a corrida
   em gráfico.
 - **Rivais com cara:** a cada temporada as rivais fecham negócios (vendas, assinaturas,
@@ -608,3 +611,4 @@ Datas de 2026.
 | 27/10 | Correção | salário na renovação sem limite (chegava a valores absurdos) e chance de aceite que quase não caía com pedido alto |
 | 27/10 | Valores | dinheiro em bilhões (bi) e trilhões (tri) em carreiras longas; sem "R$ 1000 mil" nos arredondamentos |
 | 27/10 | Conserto | saves afetados pelo bug do salário são corrigidos ao carregar; crescimento próprio das rivais com teto, para carreiras muito longas |
+| 28/10 | Rivais | vendas das rivais com preço de mercado (não mais de R$ 1 bi a 2 bi qualquer jogador); perseguição mais branda, para dar para alcançar e passar a líder |
